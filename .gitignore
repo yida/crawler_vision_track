@@ -1,0 +1,14 @@
+build
+bin
+lib
+
+srv_gen
+msg_gen
+
+.DS_Store
+*~
+*.swp
+*.py
+*.asv
+*.o
+
