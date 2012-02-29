@@ -5,7 +5,6 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/String.h>
-#include <cv_bridge/cv_bridge.h>
 
 using namespace std;
 
@@ -23,8 +22,10 @@ private:
 	ros::Publisher DebugMsgs;
 
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
+	
+	inline void RGB2V(const sensor_msgs::ImageConstPtr& RGB, uint8_t *V);
 
-	cv_bridge::CvImage curFrame;
+	sensor_msgs::Image curFrame;
 
 };
 

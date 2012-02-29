@@ -12,7 +12,6 @@
   <depend package="sensor_msgs"/>
 	<depend package="std_msgs" />
   <depend package="camera1394"/>
-  <depend package="cv_bridge"/>
 
 </package>
 

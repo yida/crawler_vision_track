@@ -1,4 +1,5 @@
 #include <string>
+#include <algorithm>
 #include <CrawlerVisionTrack.h>
 
 VisionTracker::VisionTracker(ros::NodeHandle& node)
@@ -9,29 +10,35 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 {
 }
 
+
+inline void VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB,uint8_t *V){
+	size_t idxV = 0;
+	size_t sizeRGB = RGB->step * RGB->height;
+	for (size_t idxRGB = 0; idxRGB < sizeRGB; idxRGB+=3){
+		V[idxV] = RGB->data[idxRGB];
+		V[idxV] = max(V[idxV],RGB->data[idxRGB+1]);
+		V[idxV] = max(V[idxV],RGB->data[idxRGB+2]);		
+	}
+}
+
 void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg)
 {
 	string imageType = msg->encoding;
-	cv_bridge::CvImagePtr cv_ptr;
-
-	try
-	{
-		cv_ptr = cv_bridge::toCvCopy(msg, imageType);
-	}
-	catch (cv_bridge::Exception& e)
-	{
-		ROS_ERROR("cv_bridge exception: %s", e.what());
-		return;
-	}
-	cv::Mat cv_hsv;
+	curFrame = *msg;
 //	ROS_INFO("%s",imageType.c_str());
 	if (!imageType.compare("bgr8"))
 	{
-//		ROS_INFO("Width: %d,Height: %d",cv_ptr->image.rows,cv_ptr->image.cols);
-//		ROS_INFO("Full Row Length in Byte %d",cv_ptr->image.step);
-//	ROS_INFO("%s",imageType.c_str());
+//		ROS_INFO("Width: %d,Height: %d",msg->width,msg->height);
+//		ROS_INFO("Full Row Length in Byte %d",msg->step);
+//		ROS_INFO("%s",imageType.c_str());
 		// Convert RGB to HSV
-		cvtColor(cv_ptr->image,cv_hsv->image,CV_BGR2HSV);
+		uint8_t *V = new uint8_t [msg->width*msg->height];
+		double begin, end;
+		begin = ros::Time::now().toSec();
+		RGB2V(msg,V);
+		end = ros::Time::now().toSec() - begin;
+		std::cout << end << std::endl; 
+		
 	}
 }
 
