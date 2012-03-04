@@ -12,12 +12,13 @@ class VisionTracker {
 
 public:
 	VisionTracker(ros::NodeHandle &);
-	~VisionTracker() {}
+	~VisionTracker();
 	void Track(size_t rate);
 
 private:
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber SubImage;
+	image_transport::Publisher PubImage;
 	// Debug Msgs Publish
 	ros::Publisher DebugMsgs;
 
@@ -26,6 +27,11 @@ private:
 	inline void RGB2V(const sensor_msgs::ImageConstPtr& RGB, uint8_t *V);
 
 	sensor_msgs::Image curFrame;
+	sensor_msgs::Image vChannel;
+
+	bool FIRST_FRAME;
+
+	uint8_t	*V;
 
 };
 
