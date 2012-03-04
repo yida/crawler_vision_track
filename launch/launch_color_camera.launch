@@ -20,9 +20,10 @@
   </node>
 
 	<!-- Vision Tracker -->
+<!--
 	<node pkg="crawler_vision_track" type="crawler_vision_track" 
 							name="crawler_vision_track" output="screen" />
-
+-->
 </launch>
 
 

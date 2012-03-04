@@ -8,6 +8,8 @@
 
 using namespace std;
 
+typedef vector<unsigned char> image_t;
+
 class VisionTracker {
 
 public:
@@ -24,14 +26,14 @@ private:
 
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
 	
-	inline void RGB2V(const sensor_msgs::ImageConstPtr& RGB, uint8_t *V);
+	inline void RGB2V(const sensor_msgs::ImageConstPtr& RGB, image_t& V);
 
 	sensor_msgs::Image curFrame;
 	sensor_msgs::Image vChannel;
 
 	bool FIRST_FRAME;
 
-	uint8_t	*V;
+	image_t V;
 
 };
 
