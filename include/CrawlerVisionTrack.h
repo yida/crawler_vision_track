@@ -8,10 +8,23 @@
 
 using namespace std;
 
-typedef vector<unsigned char> image_t;
+typedef std::vector<unsigned char> image_t;
+
+class ImageProc {
+
+public:
+	ImageProc();
+	ImageProc(size_t w,size_t h);
+	~ImageProc();
+private:
+	size_t width;
+	size_t height;
+	
+	std::vector<unsigned char> data;	
+};
 
 class VisionTracker {
-
+	friend ImageProc;
 public:
 	VisionTracker(ros::NodeHandle &);
 	~VisionTracker();
@@ -27,13 +40,12 @@ private:
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
 	
 	inline void RGB2V(const sensor_msgs::ImageConstPtr& RGB, image_t& V);
+	inline void Laplacian(const image_t& IMG, image_t& LAP);
 
 	sensor_msgs::Image curFrame;
 	sensor_msgs::Image vChannel;
 
 	bool FIRST_FRAME;
-
-	image_t V;
 
 };
 
