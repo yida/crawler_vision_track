@@ -18,6 +18,7 @@ public:
 private:
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber SubImage;
+	image_transport::Publisher PubImage;
 	// Debug Msgs Publish
 	ros::Publisher DebugMsgs;
 

@@ -4,3 +4,10 @@ frame_id: point
 use_ros_time: true
 bayer_pattern: "rggb"
 bayer_method: ""
+auto_exposure: 0
+exposure: 31
+auto_gain: 0
+gain: 12.041
+auto_white_balance: 0
+white_balance_BU: 737
+white_balance_RV: 573
