@@ -1,15 +1,27 @@
 #include <string>
+#include <cstring>
 #include <algorithm>
 #include <CrawlerVisionTrack.h>
+#include <crawler_vision_track/ImageDebug.h>
 
 VisionTracker::VisionTracker(ros::NodeHandle& node)
 :it_(node)
-,SubImage(it_.subscribe("/camera/image_color",1,&VisionTracker::ImageProc, this))
-,DebugMsgs(node.advertise<std_msgs::String>("debug",100))
+,SubImage(it_.subscribe("image_in",1,&VisionTracker::ImageProc, this))
+,PubImage(it_.advertise("image_proc",1))
+,DebugMsgs(node.advertise<crawler_vision_track::ImageDebug>("debug_msgs",100))
 ,curFrame()
+,vChannel()
+
+,FIRST_FRAME(true)
+,V(NULL)
 {
 }
 
+VisionTracker::~VisionTracker() {
+	if (!FIRST_FRAME) {
+		delete [] V;
+	}
+}
 
 inline void VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB,uint8_t *V){
 	size_t idxV = 0;
@@ -25,20 +37,26 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg)
 {
 	string imageType = msg->encoding;
 	curFrame = *msg;
-//	ROS_INFO("%s",imageType.c_str());
 	if (!imageType.compare("bgr8"))
 	{
-//		ROS_INFO("Width: %d,Height: %d",msg->width,msg->height);
-//		ROS_INFO("Full Row Length in Byte %d",msg->step);
-//		ROS_INFO("%s",imageType.c_str());
 		// Convert RGB to HSV
-		uint8_t *V = new uint8_t [msg->width*msg->height];
-		double begin, end;
-		begin = ros::Time::now().toSec();
+		if (FIRST_FRAME) {
+			V = new uint8_t [msg->width*msg->height];
+			FIRST_FRAME = false;
+		}
 		RGB2V(msg,V);
-		end = ros::Time::now().toSec() - begin;
-		std::cout << end << std::endl; 
-		
+
+		// Publish V Channel
+		vChannel.header.stamp = ros::Time::now();
+		vChannel.header.seq = 0;
+		vChannel.header.frame_id = "image_debug";
+		vChannel.height = msg->height;
+		vChannel.width = msg->width;
+		vChannel.encoding = "mono8";
+		vChannel.is_bigendian = msg->is_bigendian;
+		vChannel.step = vChannel.width;
+		memcpy((void *)&vChannel.data,(void *)V,sizeof(uint8_t)*vChannel.width*vChannel.height);
+		PubImage.publish(vChannel);
 	}
 }
 
