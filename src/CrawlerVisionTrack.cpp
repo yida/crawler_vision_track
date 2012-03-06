@@ -1,5 +1,12 @@
 #include <CrawlerVisionTrack.h>
 
+bool SortCrawler::operator() (Crawler& C1, Crawler& C2) {
+	if (C1.likelihood < C2.likelihood)
+		return true;
+	else
+		return false;
+}
+
 VisionTracker::VisionTracker(ros::NodeHandle& node)
 :it_(node)
 ,SubImage(it_.subscribe("camera/image_color",1,&VisionTracker::ImageProc, this))
@@ -20,7 +27,7 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 				 << 0.12890781 << 0.2578150 << 0.51563120 << 1.03126250 << 2.06252501 << 1.03126252 << 0.5156312 << 0.2578156 << 0.12890781 << arma::endr
 				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
 				 << 0.03222695 << 0.0644539 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr;
-
+	GauKer = GauKer/arma::accu(GauKer);
 }
 
 VisionTracker::~VisionTracker() {
@@ -45,8 +52,7 @@ inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::ma
 	return true;
 }
 
-inline bool VisionTracker::GauBlur(const arma::mat& V, arma::mat& Blur) {
-//	arma::mat Vs = V.submat(0,0,4,4);		
+inline bool VisionTracker::Laplacian(const arma::mat& V, arma::mat& Lap) {
 	double sum;
 	size_t kerSize = GauKer.n_rows;
 	size_t width = V.n_cols - kerSize;
@@ -54,16 +60,45 @@ inline bool VisionTracker::GauBlur(const arma::mat& V, arma::mat& Blur) {
 	for (size_t r = 0; r < height; r++)
 		for (size_t c = 0; c < width; c++) {
 			sum = arma::accu(V.submat(r,c,r+kerSize-1,c+kerSize-1) % GauKer);
-			Blur(r+kerSize/2,c+kerSize/2) = V(r+kerSize/2,c+kerSize/2) - sum; 
+			Lap(r+kerSize/2,c+kerSize/2) = abs(sum - V(r+kerSize/2,c+kerSize/2));
 		}
-//	Blur.print("acc num:");
-//	std::cout << "acc num:" << std::endl << std::cout << Blur << std::endl;
 	return 0;
 }
 
 //-------------------
 // Debug Msg Publish
 //-------------------
+bool VisionTracker::markCrawler(arma::mat& IMG) {
+	int cenX = 100;
+	int cenY = 100;
+	int winSize = 20;
+	int width,height;
+	int wIMG = IMG.n_cols;
+	int hIMG = IMG.n_rows;
+	// Draw Square Marker
+	// top line
+	height = std::max(0, cenY - winSize);
+	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
+		IMG(height,w) = IMG.max();
+	}
+	// bottom line
+	height = std::min(hIMG, cenY + winSize);
+	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
+		IMG(height,w) = IMG.max();
+	}
+	// left line
+	width = std::max(0, cenX - winSize);
+	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
+		IMG(h,width) = IMG.max();
+	}
+	// right line
+	width = std::min(hIMG, cenX + winSize);
+	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
+		IMG(h,width) = IMG.max();
+	}
+	return true;
+}
+
 bool VisionTracker::debugImagePublish(arma::mat& IMG) {
 	sensor_msgs::Image debugImg;
 	debugImg.header.stamp = ros::Time::now();
@@ -76,6 +111,7 @@ bool VisionTracker::debugImagePublish(arma::mat& IMG) {
 	arma::mat tIMG = IMG.st();
 	double maxIMG = IMG.max();
 	double minIMG = IMG.min();
+	markCrawler(IMG);
 	for (size_t i = 0; i < tIMG.size(); i++) {
 		debugImg.data.push_back((char)round((tIMG.at(i)-minIMG)*255/(maxIMG-minIMG)));
 	}
@@ -88,7 +124,7 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	std::string imageType = msg->encoding;
 	curFrame = *msg;
 	arma::mat V_layer(msg->height,msg->width);
-	arma::mat V_blur(msg->height,msg->width);
+	arma::mat V_lap(msg->height,msg->width);
 
 	if (!imageType.compare("bgr8"))
 	{
@@ -101,7 +137,7 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		}
 
 		RGB2V(msg,V_layer);
-		GauBlur(V_layer,V_blur);
+		Laplacian(V_layer,V_lap);
 
 		// Debug Msgs
 		debug.header.stamp = ros::Time::now();
@@ -112,7 +148,7 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		DebugMsgs.publish(debug);
 
 		// Publish V Channel
-		debugImagePublish(V_blur);	
+		debugImagePublish(V_lap);	
 
 //		GauKer.print("Gau:");
 //		std::cout << "Gau:" << std::endl << GauKer << std::endl;
