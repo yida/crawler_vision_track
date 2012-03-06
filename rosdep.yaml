@@ -1,0 +1,11 @@
+armadillo:
+  ubuntu: |
+      if [ ! -f /usr/include/armadillo ] ; then
+        mkdir -p ~/ros/ros-deps
+        cd ~/ros/ros-deps
+        wget --tries=10 http://sourceforge.net/projects/arma/files/armadillo-2.4.4.tar.gz
+        tar xvf armadillo-2.4.4.tar.gz
+        cd armadillo-2.4.4
+        cmake .
+        make && sudo make install 
+      fi

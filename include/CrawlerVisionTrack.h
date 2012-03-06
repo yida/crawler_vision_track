@@ -1,30 +1,18 @@
 #ifndef __CRAWLER_VISION_TRACK__
 #define __CRAWLER_VISION_TRACK__
 
+#include <string>
+#include <cstring>
+#include <algorithm>
+#include <armadillo>
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/String.h>
-
-using namespace std;
-
-typedef std::vector<unsigned char> image_t;
-
-class ImageProc {
-
-public:
-	ImageProc();
-	ImageProc(size_t w,size_t h);
-	~ImageProc();
-private:
-	size_t width;
-	size_t height;
-	
-	std::vector<unsigned char> data;	
-};
+#include <crawler_vision_track/ImageDebug.h>
 
 class VisionTracker {
-	friend ImageProc;
+
 public:
 	VisionTracker(ros::NodeHandle &);
 	~VisionTracker();
@@ -38,14 +26,19 @@ private:
 	ros::Publisher DebugMsgs;
 
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
-	
-	inline void RGB2V(const sensor_msgs::ImageConstPtr& RGB, image_t& V);
-	inline void Laplacian(const image_t& IMG, image_t& LAP);
 
+	bool debugImagePublish(arma::mat& IMG);
+	
+	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V);
+	inline bool GauBlur(const arma::mat& V, arma::mat& Blur);
 	sensor_msgs::Image curFrame;
-	sensor_msgs::Image vChannel;
+
+	crawler_vision_track::ImageDebug debug;
 
 	bool FIRST_FRAME;
+
+	long frame_count;
+	arma::mat GauKer;
 
 };
 
