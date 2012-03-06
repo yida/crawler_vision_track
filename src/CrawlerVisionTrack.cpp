@@ -16,6 +16,7 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 ,curFrame()
 ,debug()
 ,FIRST_FRAME(true)
+,maxCrawlers(10)
 ,frame_count(0)
 {
 	GauKer << 0.03222695 << 0.0644530 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr
@@ -28,6 +29,16 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
 				 << 0.03222695 << 0.0644539 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr;
 	GauKer = GauKer/arma::accu(GauKer);
+
+	node.getParam("BlueMaskThreshold/Red",BlueMaskThresR);
+	node.getParam("BlueMaskThreshold/Green",BlueMaskThresG);
+	node.getParam("BlueMaskThreshold/Blue",BlueMaskThresB);
+	node.getParam("YellowMaskThreshold/Red",YellowMaskThresR);
+	node.getParam("YellowMaskThreshold/Green",YellowMaskThresG);
+	node.getParam("YellowMaskThreshold/Blue",YellowMaskThresB);
+	node.getParam("BlackMaskThreshold/Red",BlackMaskThresR);
+	node.getParam("BlackMaskThreshold/Green",BlackMaskThresG);
+	node.getParam("BlackMaskThreshold/Blue",BlackMaskThresB);
 }
 
 VisionTracker::~VisionTracker() {
@@ -36,16 +47,33 @@ VisionTracker::~VisionTracker() {
 //-------------------
 // Image Processing
 //-------------------
+inline bool VisionTracker::MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, arma::mat& BMask, arma::mat& YMask, arma::mat& BKMask) {
+	size_t sizeRGB = RGB->step * RGB->height;
+	size_t idxV = 0;
+	for (size_t idxRGB = 0; idxRGB < sizeRGB; idxRGB+=3){
+		BMask(idxV/RGB->width,idxV%RGB->width)  = ((RGB->data[idxRGB]>=BlueMaskThresB) &&
+																							(RGB->data[idxRGB+1]<BlueMaskThresG) &&
+																							(RGB->data[idxRGB+2]<BlueMaskThresR))? 1:0;
+		YMask(idxV/RGB->width,idxV%RGB->width)  = ((RGB->data[idxRGB]<YellowMaskThresB) &&
+																							(RGB->data[idxRGB+1]>=YellowMaskThresG) &&
+																							(RGB->data[idxRGB+2]<YellowMaskThresR))? 1:0;
+		BKMask(idxV/RGB->width,idxV%RGB->width) = ((RGB->data[idxRGB]<BlackMaskThresB) && 
+																							(RGB->data[idxRGB+1]<BlackMaskThresG) && 
+																							(RGB->data[idxRGB+2]<BlackMaskThresR))? 1:0; 
+		idxV++;
+	} 
+	return true;
+}
+
+
 inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V){
 	size_t sizeRGB = RGB->step * RGB->height;
 	size_t idxV = 0;
 	unsigned char Brightness = 0;
-//	ROS_INFO("%d %d",V.n_rows,V.n_cols);
 	for (size_t idxRGB = 0; idxRGB < sizeRGB; idxRGB+=3){
 		Brightness = RGB->data[idxRGB];
 		Brightness = std::max(Brightness,RGB->data[idxRGB+1]);
 		Brightness = std::max(Brightness,RGB->data[idxRGB+2]);		
-//		ROS_INFO("height %d, width %d",idxV/RGB->width,idxV%RGB->width);
 		V(idxV/RGB->width,idxV%RGB->width) = Brightness;
 		idxV++;
 	} 
@@ -65,6 +93,16 @@ inline bool VisionTracker::Laplacian(const arma::mat& V, arma::mat& Lap) {
 	return 0;
 }
 
+inline bool VisionTracker::InterestAreaScan(const arma::mat Layer) {
+	// Seeking Area based on Mask	
+
+	size_t Width_of_Max,Height_of_Max;	
+	
+	Layer.max(Height_of_Max,Width_of_Max);	
+//	std::cout << Height_of_Max << ' ' << Width_of_Max << std::endl;
+	return true;
+}
+
 //-------------------
 // Debug Msg Publish
 //-------------------
@@ -79,22 +117,30 @@ bool VisionTracker::markCrawler(arma::mat& IMG) {
 	// top line
 	height = std::max(0, cenY - winSize);
 	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
-		IMG(height,w) = IMG.max();
+		IMG(height,w) = IMG.min();
+		IMG(height-1,w) = IMG.min();
+		IMG(height+1,w) = IMG.min();
 	}
 	// bottom line
 	height = std::min(hIMG, cenY + winSize);
 	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
-		IMG(height,w) = IMG.max();
+		IMG(height,w) = IMG.min();
+		IMG(height-1,w) = IMG.min();
+		IMG(height+1,w) = IMG.min();
 	}
 	// left line
 	width = std::max(0, cenX - winSize);
 	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
-		IMG(h,width) = IMG.max();
+		IMG(h,width) = IMG.min();
+		IMG(h,width-1) = IMG.min();
+		IMG(h,width+1) = IMG.min();
 	}
 	// right line
 	width = std::min(hIMG, cenX + winSize);
 	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
-		IMG(h,width) = IMG.max();
+		IMG(h,width) = IMG.min();
+		IMG(h,width+1) = IMG.min();
+		IMG(h,width-1) = IMG.max();
 	}
 	return true;
 }
@@ -111,7 +157,7 @@ bool VisionTracker::debugImagePublish(arma::mat& IMG) {
 	arma::mat tIMG = IMG.st();
 	double maxIMG = IMG.max();
 	double minIMG = IMG.min();
-	markCrawler(IMG);
+//	markCrawler(IMG);
 	for (size_t i = 0; i < tIMG.size(); i++) {
 		debugImg.data.push_back((char)round((tIMG.at(i)-minIMG)*255/(maxIMG-minIMG)));
 	}
@@ -125,6 +171,9 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	curFrame = *msg;
 	arma::mat V_layer(msg->height,msg->width);
 	arma::mat V_lap(msg->height,msg->width);
+	arma::mat Blue_Mask(msg->height,msg->width);
+	arma::mat Yellow_Mask(msg->height,msg->width);
+	arma::mat Black_Mask(msg->height,msg->width);
 
 	if (!imageType.compare("bgr8"))
 	{
@@ -136,8 +185,11 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 			// Initiate V layer Size
 		}
 
+		MaskGenerate(msg,Blue_Mask,Yellow_Mask,Black_Mask);
 		RGB2V(msg,V_layer);
 		Laplacian(V_layer,V_lap);
+		InterestAreaScan(V_lap);
+
 
 		// Debug Msgs
 		debug.header.stamp = ros::Time::now();
@@ -147,11 +199,10 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		debug.VpackageSize = V_layer.size();
 		DebugMsgs.publish(debug);
 
-		// Publish V Channel
-		debugImagePublish(V_lap);	
+		// Publish Debug Image
+		
+		debugImagePublish(Blue_Mask);	
 
-//		GauKer.print("Gau:");
-//		std::cout << "Gau:" << std::endl << GauKer << std::endl;
 	}
 }
 

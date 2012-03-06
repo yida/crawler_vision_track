@@ -43,8 +43,10 @@ private:
 	bool debugImagePublish(arma::mat& IMG);
 	inline bool markCrawler(arma::mat& IMG);
 	
+	inline bool MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, arma::mat& BMask, arma::mat& YMask, arma::mat& BKMask);
 	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V);
 	inline bool Laplacian(const arma::mat& V, arma::mat& Lap);
+	inline bool InterestAreaScan(const arma::mat Layer);
 	sensor_msgs::Image curFrame;
 
 	std::priority_queue<Crawler, std::vector<Crawler>, SortCrawler> Crawlers;
@@ -52,9 +54,19 @@ private:
 	crawler_vision_track::ImageDebug debug;
 
 	bool FIRST_FRAME;
-
+	size_t maxCrawlers;
 	long frame_count;
 	arma::mat GauKer;
+	
+	int BlueMaskThresR;
+	int BlueMaskThresG;
+	int BlueMaskThresB;
+	int YellowMaskThresR;
+	int YellowMaskThresG;
+	int YellowMaskThresB;
+	int BlackMaskThresR;
+	int BlackMaskThresG;
+	int BlackMaskThresB;	
 
 };
 
