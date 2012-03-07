@@ -2,13 +2,7 @@ guid: 00b09d0100a80b41
 video_mode: 640x480_mono8
 frame_rate: 30
 frame_id: point
+reset_on_open: true
 use_ros_time: true
 bayer_pattern: "rggb"
 bayer_method: ""
-auto_brightness: 3
-brightness: 205
-auto_exposure: 3
-exposure: 31
-auto_white_balance: 3
-white_balance_BU: 737
-white_balance_RV: 573

@@ -11,6 +11,9 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 :it_(node)
 ,SubImage(it_.subscribe("camera/image_color",1,&VisionTracker::ImageProc, this))
 ,PubImage(it_.advertise("debug_image",1))
+,PubImagebu(it_.advertise("debug_image_bumask",1))
+,PubImagebk(it_.advertise("debug_image_bkmask",1))
+,PubImagegr(it_.advertise("debug_image_grmask",1))
 ,DebugMsgs(node.advertise<crawler_vision_track::ImageDebug>("debug_msgs",100))
 
 ,curFrame()
@@ -33,9 +36,9 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 	node.getParam("BlueMaskThreshold/Red",BlueMaskThresR);
 	node.getParam("BlueMaskThreshold/Green",BlueMaskThresG);
 	node.getParam("BlueMaskThreshold/Blue",BlueMaskThresB);
-	node.getParam("YellowMaskThreshold/Red",YellowMaskThresR);
-	node.getParam("YellowMaskThreshold/Green",YellowMaskThresG);
-	node.getParam("YellowMaskThreshold/Blue",YellowMaskThresB);
+	node.getParam("GreenMaskThreshold/Red",GreenMaskThresR);
+	node.getParam("GreenMaskThreshold/Green",GreenMaskThresG);
+	node.getParam("GreenMaskThreshold/Blue",GreenMaskThresB);
 	node.getParam("BlackMaskThreshold/Red",BlackMaskThresR);
 	node.getParam("BlackMaskThreshold/Green",BlackMaskThresG);
 	node.getParam("BlackMaskThreshold/Blue",BlackMaskThresB);
@@ -47,21 +50,37 @@ VisionTracker::~VisionTracker() {
 //-------------------
 // Image Processing
 //-------------------
-inline bool VisionTracker::MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, arma::mat& BMask, arma::mat& YMask, arma::mat& BKMask) {
+inline bool VisionTracker::MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, Mask& BMask, Mask& GMask, Mask& BKMask) {
 	size_t sizeRGB = RGB->step * RGB->height;
 	size_t idxV = 0;
+	Pixel px;
 	for (size_t idxRGB = 0; idxRGB < sizeRGB; idxRGB+=3){
-		BMask(idxV/RGB->width,idxV%RGB->width)  = ((RGB->data[idxRGB]>=BlueMaskThresB) &&
-																							(RGB->data[idxRGB+1]<BlueMaskThresG) &&
-																							(RGB->data[idxRGB+2]<BlueMaskThresR))? 1:0;
-		YMask(idxV/RGB->width,idxV%RGB->width)  = ((RGB->data[idxRGB]<YellowMaskThresB) &&
-																							(RGB->data[idxRGB+1]>=YellowMaskThresG) &&
-																							(RGB->data[idxRGB+2]<YellowMaskThresR))? 1:0;
-		BKMask(idxV/RGB->width,idxV%RGB->width) = ((RGB->data[idxRGB]<BlackMaskThresB) && 
-																							(RGB->data[idxRGB+1]<BlackMaskThresG) && 
-																							(RGB->data[idxRGB+2]<BlackMaskThresR))? 1:0; 
+		if ((RGB->data[idxRGB]>=BlueMaskThresB) && 
+				(RGB->data[idxRGB+1]<BlueMaskThresG) && 
+				(RGB->data[idxRGB+2]<BlueMaskThresR)) {
+			px.height = idxV/RGB->width;
+			px.width = idxV%RGB->width;
+			BMask.push_back(px);
+		}
+
+		if ((RGB->data[idxRGB]<GreenMaskThresB) &&
+				(RGB->data[idxRGB+1]>=GreenMaskThresG) &&
+				(RGB->data[idxRGB+2]<GreenMaskThresR)) {
+			px.height = idxV/RGB->width;
+			px.width = idxV%RGB->width;
+			GMask.push_back(px);
+		}
+
+		if ((RGB->data[idxRGB]<BlackMaskThresB) && 
+				(RGB->data[idxRGB+1]<BlackMaskThresG) && 
+				(RGB->data[idxRGB+2]<BlackMaskThresR)) { 
+			px.height = idxV/RGB->width;
+			px.width = idxV%RGB->width;
+			BKMask.push_back(px);
+		}
 		idxV++;
 	} 
+//	std::cout << "blueMask:" << BMask.size() << " GreenMask:" << GMask.size() << std::endl; 
 	return true;
 }
 
@@ -93,75 +112,96 @@ inline bool VisionTracker::Laplacian(const arma::mat& V, arma::mat& Lap) {
 	return 0;
 }
 
-inline bool VisionTracker::InterestAreaScan(const arma::mat Layer) {
-	// Seeking Area based on Mask	
+inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& crawler) {
+	size_t sumWidth = 0;
+	size_t sumHeight = 0;
+	if (G.size() > 0) {
+		for (size_t iter = 0; iter < G.size(); iter++) {
+			sumWidth += G[iter].width;
+			sumHeight += G[iter].height;
+		}
+		std::cout << "Found Green LED at height:" << sumHeight/G.size() << " width:" << sumWidth/G.size() << std::endl;
+	}
+	sumWidth = 0;
+	sumHeight = 0;
+	if (B.size() > 0) {
+		for (size_t iter = 0; iter < B.size(); iter++) {
+			sumWidth += B[iter].width;
+			sumHeight += B[iter].height;
+		}
+		std::cout << "Found Blue LED at height:" << sumHeight/B.size() << " width:" << sumWidth/B.size() << std::endl;
+	}
 
-	size_t Width_of_Max,Height_of_Max;	
-	
-	Layer.max(Height_of_Max,Width_of_Max);	
-//	std::cout << Height_of_Max << ' ' << Width_of_Max << std::endl;
 	return true;
 }
 
 //-------------------
 // Debug Msg Publish
 //-------------------
-bool VisionTracker::markCrawler(arma::mat& IMG) {
-	int cenX = 100;
-	int cenY = 100;
-	int winSize = 20;
-	int width,height;
-	int wIMG = IMG.n_cols;
-	int hIMG = IMG.n_rows;
-	// Draw Square Marker
-	// top line
-	height = std::max(0, cenY - winSize);
-	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
-		IMG(height,w) = IMG.min();
-		IMG(height-1,w) = IMG.min();
-		IMG(height+1,w) = IMG.min();
+inline bool VisionTracker::Mask2Gray(const Mask& mask, arma::mat& IMG) {
+	IMG.fill(0.0);
+	for (size_t iter = 0; iter < mask.size(); iter++) {
+		IMG(mask[iter].height,mask[iter].width) = 1;
 	}
-	// bottom line
-	height = std::min(hIMG, cenY + winSize);
-	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
-		IMG(height,w) = IMG.min();
-		IMG(height-1,w) = IMG.min();
-		IMG(height+1,w) = IMG.min();
-	}
-	// left line
-	width = std::max(0, cenX - winSize);
-	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
-		IMG(h,width) = IMG.min();
-		IMG(h,width-1) = IMG.min();
-		IMG(h,width+1) = IMG.min();
-	}
-	// right line
-	width = std::min(hIMG, cenX + winSize);
-	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
-		IMG(h,width) = IMG.min();
-		IMG(h,width+1) = IMG.min();
-		IMG(h,width-1) = IMG.max();
-	}
+	return true;	
+}
+
+inline bool VisionTracker::markCrawler(const std::vector<unsigned char>& IMG, const Crawler& crawler, arma::mat& IMG_Label) {
+//	IMG_Label = IMG;
+//	int cenX = 100;
+//	int cenY = 100;
+//	int winSize = 20;
+//	int width,height;
+//	int wIMG = IMG_Label.n_cols;
+//	int hIMG = IMG_Label.n_rows;
+//	// Draw Square Marker
+//	// top line
+//	height = std::max(0, cenY - winSize);
+//	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
+//		IMG_Label(height,w) = IMG_Label.min();
+//		IMG_Label(height-1,w) = IMG_Label.min();
+//		IMG_Label(height+1,w) = IMG_Label.min();
+//	}
+//	// bottom line
+//	height = std::min(hIMG, cenY + winSize);
+//	for (int w = std::max(0, cenX - winSize); w < std::min(wIMG,cenX + winSize); w++) {
+//		IMG_Label(height,w) = IMG_Label.min();
+//		IMG_Label(height-1,w) = IMG_Label.min();
+//		IMG_Label(height+1,w) = IMG_Label.min();
+//	}
+//	// left line
+//	width = std::max(0, cenX - winSize);
+//	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
+//		IMG_Label(h,width) = IMG_Label.min();
+//		IMG_Label(h,width-1) = IMG_Label.min();
+//		IMG_Label(h,width+1) = IMG_Label.min();
+//	}
+//	// right line
+//	width = std::min(hIMG, cenX + winSize);
+//	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
+//		IMG_Label(h,width) = IMG_Label.min();
+//		IMG_Label(h,width+1) = IMG_Label.min();
+//		IMG_Label(h,width-1) = IMG_Label.max();
+//	}
 	return true;
 }
 
-bool VisionTracker::debugImagePublish(arma::mat& IMG) {
+bool VisionTracker::debugImagePublish(image_transport::Publisher& Pub, arma::mat& IMG, std::string Type) {
 	sensor_msgs::Image debugImg;
 	debugImg.header.stamp = ros::Time::now();
 	debugImg.header.frame_id = "debug_image";
 	debugImg.height = IMG.n_rows;
 	debugImg.width = IMG.n_cols;
-	debugImg.encoding = "mono8";
+	debugImg.encoding = Type;
 	debugImg.is_bigendian = 0;
 	debugImg.step = IMG.n_cols;
 	arma::mat tIMG = IMG.st();
 	double maxIMG = IMG.max();
 	double minIMG = IMG.min();
-//	markCrawler(IMG);
 	for (size_t i = 0; i < tIMG.size(); i++) {
 		debugImg.data.push_back((char)round((tIMG.at(i)-minIMG)*255/(maxIMG-minIMG)));
 	}
-	PubImage.publish(debugImg);
+	Pub.publish(debugImg);
 	return true;	
 }
 
@@ -169,11 +209,12 @@ bool VisionTracker::debugImagePublish(arma::mat& IMG) {
 void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	std::string imageType = msg->encoding;
 	curFrame = *msg;
+	Crawler crawler;
 	arma::mat V_layer(msg->height,msg->width);
 	arma::mat V_lap(msg->height,msg->width);
-	arma::mat Blue_Mask(msg->height,msg->width);
-	arma::mat Yellow_Mask(msg->height,msg->width);
-	arma::mat Black_Mask(msg->height,msg->width);
+	Mask Blue_Mask;
+	Mask Green_Mask;
+	Mask Black_Mask;
 
 	if (!imageType.compare("bgr8"))
 	{
@@ -185,10 +226,10 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 			// Initiate V layer Size
 		}
 
-		MaskGenerate(msg,Blue_Mask,Yellow_Mask,Black_Mask);
+		MaskGenerate(msg,Blue_Mask,Green_Mask,Black_Mask);
 		RGB2V(msg,V_layer);
 		Laplacian(V_layer,V_lap);
-		InterestAreaScan(V_lap);
+		DetectCrawler(Green_Mask,Blue_Mask,crawler);
 
 
 		// Debug Msgs
@@ -198,11 +239,22 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		debug.Vheight = V_layer.n_rows;
 		debug.VpackageSize = V_layer.size();
 		DebugMsgs.publish(debug);
-
-		// Publish Debug Image
 		
-		debugImagePublish(Blue_Mask);	
-
+			// Publish Debug Image
+//		debugImagePublish(PubImage,V_lap,"mono8");
+		arma::mat BMask_Gray(msg->height,msg->width);
+		Mask2Gray(Blue_Mask,BMask_Gray);
+		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
+		arma::mat GMask_Gray(msg->height,msg->width);
+		Mask2Gray(Green_Mask,GMask_Gray);
+		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
+		arma::mat BKMask_Gray(msg->height,msg->width);
+		Mask2Gray(Black_Mask,BKMask_Gray);
+		debugImagePublish(PubImagebk,BKMask_Gray,"mono8");
+		
+		arma::mat IMG_Label(msg->height,msg->step);
+		markCrawler(msg->data,crawler,IMG_Label);
+		debugImagePublish(PubImage,IMG_Label,"bgr8");
 	}
 }
 

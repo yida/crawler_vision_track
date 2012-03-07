@@ -15,9 +15,16 @@
 
 struct Crawler {
 	double likelihood;
-	double centroid_X;
-	double centroid_Y;
+	size_t centroid_X;
+	size_t centroid_Y;
 };
+
+struct Pixel {
+	size_t width;
+	size_t height;
+};
+
+typedef std::vector<Pixel> Mask;
 
 class SortCrawler {
 public:
@@ -35,18 +42,23 @@ private:
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber SubImage;
 	image_transport::Publisher PubImage;
+	image_transport::Publisher PubImagebu;
+	image_transport::Publisher PubImagebk;
+	image_transport::Publisher PubImagegr;
+
 	// Debug Msgs Publish
 	ros::Publisher DebugMsgs;
 
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
 
-	bool debugImagePublish(arma::mat& IMG);
-	inline bool markCrawler(arma::mat& IMG);
+	bool debugImagePublish(image_transport::Publisher& Pub, arma::mat& IMG, std::string Type);
+	inline bool markCrawler(const std::vector<unsigned char>& IMG, const Crawler& cralwer, arma::mat& IMG_Label);
+	inline bool Mask2Gray(const Mask& mask, arma::mat& IMG);
 	
-	inline bool MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, arma::mat& BMask, arma::mat& YMask, arma::mat& BKMask);
+	inline bool MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, Mask& BMask, Mask& GMask, Mask& BKMask);
 	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V);
 	inline bool Laplacian(const arma::mat& V, arma::mat& Lap);
-	inline bool InterestAreaScan(const arma::mat Layer);
+	inline bool DetectCrawler(const Mask G, const Mask B, Crawler& crawler);
 	sensor_msgs::Image curFrame;
 
 	std::priority_queue<Crawler, std::vector<Crawler>, SortCrawler> Crawlers;
@@ -61,9 +73,9 @@ private:
 	int BlueMaskThresR;
 	int BlueMaskThresG;
 	int BlueMaskThresB;
-	int YellowMaskThresR;
-	int YellowMaskThresG;
-	int YellowMaskThresB;
+	int GreenMaskThresR;
+	int GreenMaskThresG;
+	int GreenMaskThresB;
 	int BlackMaskThresR;
 	int BlackMaskThresG;
 	int BlackMaskThresB;	

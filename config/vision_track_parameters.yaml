@@ -3,10 +3,10 @@ BlueMaskThreshold:
   Green: 200
   Blue: 200
 
-YellowMaskThreshold:
-  Red: 200
-  Green: 200
-  Blue: 200
+GreenMaskThreshold:
+  Red: 180
+  Green: 180
+  Blue: 180
 
 BlackMaskThreshold:
   Red: 80
