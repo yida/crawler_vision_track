@@ -15,8 +15,8 @@
 
 struct Crawler {
 	double likelihood;
-	size_t centroid_X;
-	size_t centroid_Y;
+	int centroid_X;
+	int centroid_Y;
 };
 
 struct Pixel {
@@ -52,7 +52,7 @@ private:
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
 
 	bool debugImagePublish(image_transport::Publisher& Pub, arma::mat& IMG, std::string Type);
-	inline bool markCrawler(const std::vector<unsigned char>& IMG, const Crawler& cralwer, arma::mat& IMG_Label);
+	inline bool markCrawler(sensor_msgs::Image IMG, const Crawler& cralwer);
 	inline bool Mask2Gray(const Mask& mask, arma::mat& IMG);
 	
 	inline bool MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, Mask& BMask, Mask& GMask, Mask& BKMask);
@@ -69,6 +69,7 @@ private:
 	size_t maxCrawlers;
 	long frame_count;
 	arma::mat GauKer;
+	Crawler LastCrawler;
 	
 	int BlueMaskThresR;
 	int BlueMaskThresG;
