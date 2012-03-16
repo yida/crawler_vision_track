@@ -14,16 +14,19 @@
 	<!-- Bayer color decoding -->
   <node pkg="nodelet" type="nodelet" name="image_proc_debayer"
   		args="load image_proc/debayer camera_nodelet_manager">
+			<remap from="image_raw" to="camera/image_raw" />
 	   	<remap from="image_color" to="camera/image_color" />
 			<remap from="image_mono" to="camera/image_mono" />
-			<remap from="image_raw" to="camera/image_raw" />
   </node>
 
 	<!-- Vision Tracker -->
+<!--
 	<node pkg="crawler_vision_track" type="crawler_vision_track" 
-							name="crawler_vision_track" output="screen" />
+							name="crawler_vision_track" output="screen">
 
 	<rosparam file="$(find crawler_vision_track)/config/vision_track_parameters.yaml"/>
+  </node>
+-->
 </launch>
 
 
