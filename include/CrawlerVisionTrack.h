@@ -61,9 +61,8 @@ private:
 	inline bool Mask2Gray(const Mask& mask, arma::mat& IMG);
 	
 	inline bool MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, Mask& BMask, Mask& GMask, Mask& BKMask);
-	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, 
-										arma::mat& V, const int& width, const int& height, const int& size);
-	inline bool Laplacian(const arma::mat& V, arma::mat& Lap, const int& width, const int& height, const int& size);
+	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V);
+	inline bool Laplacian(const arma::mat& V, arma::mat& Lap);
 	inline bool DetectCrawler(const Mask G, const Mask B, Crawler& crawler);
 	sensor_msgs::Image curFrame;
 

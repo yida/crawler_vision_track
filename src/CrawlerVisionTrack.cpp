@@ -89,8 +89,7 @@ inline bool VisionTracker::MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, M
 }
 
 
-inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, 
-																	arma::mat& V, const int& height, const int& width, const int& size){
+inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V){
 	size_t sizeRGB = RGB->step * RGB->height;
 	size_t idxV = 0;
 	unsigned char Brightness = 0;
