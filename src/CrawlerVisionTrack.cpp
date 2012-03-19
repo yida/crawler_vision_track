@@ -89,7 +89,8 @@ inline bool VisionTracker::MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, M
 }
 
 
-inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V){
+inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, 
+																	arma::mat& V, const int& height, const int& width, const int& size){
 	size_t sizeRGB = RGB->step * RGB->height;
 	size_t idxV = 0;
 	unsigned char Brightness = 0;
@@ -127,7 +128,7 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 		}
 		GMx = sumWidth/G.size();
 		GMy = sumHeight/G.size();
-		std::cout << "Found Green LED at height:" << sumHeight/G.size() << " width:" << sumWidth/G.size() << std::endl;
+//		std::cout << "Found Green LED at height:" << sumHeight/G.size() << " width:" << sumWidth/G.size() << std::endl;
 	}
 	else {
 		return false;
@@ -141,12 +142,16 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 		}
 		BMx = sumWidth/B.size();
 		BMy = sumHeight/B.size();
-		std::cout << "Found Blue LED at height:" << sumHeight/B.size() << " width:" << sumWidth/B.size() << std::endl;
+//		std::cout << "Found Blue LED at height:" << sumHeight/B.size() << " width:" << sumWidth/B.size() << std::endl;
 	}
 	else {
 		return false;
 	}
 
+	crawler.bcentroid_X = BMx;
+	crawler.bcentroid_Y = BMy;
+	crawler.gcentroid_X = GMx;
+	crawler.gcentroid_Y = GMy;
 	crawler.centroid_X = (BMx + GMx) / 2;
 	crawler.centroid_Y = (BMy + GMy) / 2;
 //	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::cout;
@@ -164,42 +169,76 @@ inline bool VisionTracker::Mask2Gray(const Mask& mask, arma::mat& IMG) {
 	return true;	
 }
 
-inline bool VisionTracker::markCrawler(sensor_msgs::Image IMG, const Crawler& crawler) {
-	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::endl;
+inline bool VisionTracker::markCrawler(const sensor_msgs::ImageConstPtr& Origin_IMG, const Crawler& crawler) const{
+//	std::cout << "Crawler Centroid: " << crawler.centroid_X << ' ' << crawler.centroid_Y << std::endl;
+	std::cout << "RGB Time Stamp:" << Origin_IMG->header.stamp << std::endl;	
+	sensor_msgs::Image IMG = *Origin_IMG;
 
 	int wIMG = IMG.width;
 	int hIMG = IMG.height;
 	int winSize = 20;
-	int height,width;
+	int height, width;
 	// Draw Square Marker
 	// top line
 	height = std::max(0, crawler.centroid_Y - winSize);
-	for (int w = 3 * std::max(0, crawler.centroid_X - winSize); w < 3 * std::min(wIMG,crawler.centroid_X + winSize); w+=3) {
+	for (int w = 3 * std::max(0, crawler.centroid_X - winSize); 
+						w < 3 * std::min(wIMG, crawler.centroid_X + winSize); w+=3) {
 		IMG.data[height * IMG.step + w] = 0;
 		IMG.data[height * IMG.step + w + 1] = 0;
 		IMG.data[height * IMG.step + w + 2] = 0;
 	}
 //	// bottom line
 	height = std::min(hIMG, crawler.centroid_Y + winSize);
-	for (int w = 3 * std::max(0, crawler.centroid_X - winSize); w < 3 * std::min(wIMG,crawler.centroid_X + winSize); w+=3) {
+	for (int w = 3 * std::max(0, crawler.centroid_X - winSize); 
+						w < 3 * std::min(wIMG, crawler.centroid_X + winSize); w+=3) {
 		IMG.data[height * IMG.step + w] = 0;
 		IMG.data[height * IMG.step + w + 1] = 0;
 		IMG.data[height * IMG.step + w + 2] = 0;
 	}
 	// left line
-//	width = std::max(0, cenX - winSize);
-//	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
-//		IMG_Label(h,width) = 0;
-//		IMG_Label(h,width-1) = 0;
-//		IMG_Label(h,width+1) = 0;
-//	}
-//	// right line
-//	width = std::min(hIMG, cenX + winSize);
-//	for (int h = std::max(0, cenY - winSize); h < std::min(hIMG,cenY + winSize); h++) {
-//		IMG_Label(h,width) = 0;
-//		IMG_Label(h,width+1) = 0;
-//		IMG_Label(h,width-1) = IMG_Label.max();
-//	}
+	width = 3 * std::max(0, crawler.centroid_X - winSize);
+	for (int h = std::max(0, crawler.centroid_Y - winSize); 
+						h < std::min(hIMG, crawler.centroid_Y + winSize); h++) {
+		IMG.data[h * IMG.step + width] = 0;
+		IMG.data[h * IMG.step + width + 1] = 0;
+		IMG.data[h * IMG.step + width + 2] = 0;
+	}
+	// right line
+	width = 3 * std::min(wIMG, crawler.centroid_X + winSize);
+	for (int h = std::max(0, crawler.centroid_Y - winSize); 
+						h < std::min(hIMG, crawler.centroid_Y + winSize); h++) {
+		IMG.data[h * IMG.step + width] = 0;
+		IMG.data[h * IMG.step + width + 1] = 0;
+		IMG.data[h * IMG.step + width + 2] = 0;
+	}
+	// Orientation
+	int lineLen = 10;
+	int lineStp = std::max(0, std::min(crawler.bcentroid_X, crawler.gcentroid_X) - lineLen);
+	int lineEdp = std::min(wIMG, std::max(crawler.bcentroid_X, crawler.gcentroid_X) + lineLen);	
+	double lineSlopeDenum = crawler.bcentroid_X - crawler.gcentroid_X;
+//	if (lineSlopeDenum == 0)	
+//		std::cout << "Perpendicular" << std::endl;
+	if (lineSlopeDenum == 0) {
+		width = 3 * crawler.bcentroid_X;
+		lineStp = std::max(0, std::min(crawler.bcentroid_Y, crawler.gcentroid_Y) - lineLen);
+		lineEdp = std::min(hIMG, std::max(crawler.bcentroid_Y, crawler.gcentroid_Y) + lineLen);
+		for (int h = lineStp; h < lineEdp; h++) {
+			IMG.data[h * IMG.step + width] = 0;
+			IMG.data[h * IMG.step + width + 1] = 0;
+			IMG.data[h * IMG.step + width + 2] = 0;
+		}
+	}
+	else {
+		double lineSlope = (crawler.bcentroid_Y - crawler.gcentroid_Y) / lineSlopeDenum;
+		double lineIntersect = crawler.bcentroid_Y - lineSlope * crawler.bcentroid_X;
+		for (int w = 3 * lineStp; w < 3 * lineEdp; w+=3) {
+			height = std::max(0, (int)round(w * lineSlope / 3 + lineIntersect));
+			height = std::min(hIMG, height);
+			IMG.data[height * IMG.step + w] = 0;
+			IMG.data[height * IMG.step + w + 1] = 0;
+			IMG.data[height * IMG.step + w + 2] = 0;
+		}
+	}
 	PubImage.publish(IMG);	
 	return true;
 }
@@ -227,9 +266,7 @@ bool VisionTracker::debugImagePublish(image_transport::Publisher& Pub, arma::mat
 void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	std::string imageType = msg->encoding;
 	curFrame = *msg;
-	Crawler crawler;
-	crawler.centroid_X = 0;
-	crawler.centroid_Y = 0;
+	Crawler crawler = {0,0,0,0,0,0,0};
 	arma::mat V_layer(msg->height,msg->width);
 	arma::mat V_lap(msg->height,msg->width);
 	Mask Blue_Mask;
@@ -247,35 +284,36 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		}
 
 		MaskGenerate(msg,Blue_Mask,Green_Mask,Black_Mask);
-		RGB2V(msg,V_layer);
-		Laplacian(V_layer,V_lap);
+//		RGB2V(msg,V_layer);
+//		Laplacian(V_layer,V_lap);
 	 	bool Detected = DetectCrawler(Green_Mask,Blue_Mask,crawler);
 //			LastCrawler = crawler;
 //		std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::cout;
 		if (Detected) {
-			markCrawler(curFrame,crawler);
+			LastCrawler = crawler;
+			markCrawler(msg,crawler);
 		}
 
 
 		// Debug Msgs
-		debug.header.stamp = ros::Time::now();
-		debug.header.frame_id = "debug_msgs";
-		debug.Vwidth = V_layer.n_cols;
-		debug.Vheight = V_layer.n_rows;
-		debug.VpackageSize = V_layer.size();
-		DebugMsgs.publish(debug);
+//		debug.header.stamp = ros::Time::now();
+//		debug.header.frame_id = "debug_msgs";
+//		debug.Vwidth = V_layer.n_cols;
+//		debug.Vheight = V_layer.n_rows;
+//		debug.VpackageSize = V_layer.size();
+//		DebugMsgs.publish(debug);
 		
 			// Publish Debug Image
 //		debugImagePublish(PubImage,V_lap,"mono8");
-		arma::mat BMask_Gray(msg->height,msg->width);
-		Mask2Gray(Blue_Mask,BMask_Gray);
-		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
-		arma::mat GMask_Gray(msg->height,msg->width);
-		Mask2Gray(Green_Mask,GMask_Gray);
-		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
-		arma::mat BKMask_Gray(msg->height,msg->width);
-		Mask2Gray(Black_Mask,BKMask_Gray);
-		debugImagePublish(PubImagebk,BKMask_Gray,"mono8");
+//		arma::mat BMask_Gray(msg->height,msg->width);
+//		Mask2Gray(Blue_Mask,BMask_Gray);
+//		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
+//		arma::mat GMask_Gray(msg->height,msg->width);
+//		Mask2Gray(Green_Mask,GMask_Gray);
+//		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
+//		arma::mat BKMask_Gray(msg->height,msg->width);
+//		Mask2Gray(Black_Mask,BKMask_Gray);
+//		debugImagePublish(PubImagebk,BKMask_Gray,"mono8");
 		
 //		arma::mat IMG_Label(msg->height,msg->step);
 //		markCrawler(msg,crawler);

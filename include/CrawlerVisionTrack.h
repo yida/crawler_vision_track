@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <cmath>
 #include <algorithm>
 #include <armadillo>
 #include <ros/ros.h>
@@ -17,6 +18,10 @@ struct Crawler {
 	double likelihood;
 	int centroid_X;
 	int centroid_Y;
+	int bcentroid_X;
+	int bcentroid_Y;
+	int gcentroid_X;
+	int gcentroid_Y;
 };
 
 struct Pixel {
@@ -52,12 +57,13 @@ private:
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
 
 	bool debugImagePublish(image_transport::Publisher& Pub, arma::mat& IMG, std::string Type);
-	inline bool markCrawler(sensor_msgs::Image IMG, const Crawler& cralwer);
+	inline bool markCrawler(const sensor_msgs::ImageConstPtr& Origin_IMG, const Crawler& cralwer) const;
 	inline bool Mask2Gray(const Mask& mask, arma::mat& IMG);
 	
 	inline bool MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, Mask& BMask, Mask& GMask, Mask& BKMask);
-	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V);
-	inline bool Laplacian(const arma::mat& V, arma::mat& Lap);
+	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, 
+										arma::mat& V, const int& width, const int& height, const int& size);
+	inline bool Laplacian(const arma::mat& V, arma::mat& Lap, const int& width, const int& height, const int& size);
 	inline bool DetectCrawler(const Mask G, const Mask B, Crawler& crawler);
 	sensor_msgs::Image curFrame;
 

@@ -1,0 +1,21 @@
+<launch>
+
+ <!-- nodelet manager process -->
+<!--
+  <node pkg="nodelet" type="nodelet" name="camera_nodelet_manager_local"
+	        args="manager" />
+-->
+
+	<!-- Bayer color decoding -->
+  <node pkg="image_proc" type="image_proc" name="image_proc_debayer_local">
+			<!--
+	   	<remap from="image_color" to="camera_local/image_color" />
+			<remap from="image_mono" to="camera_local/image_mono" />
+			-->
+			<remap from="image_raw" to="camera/image_raw" />
+  </node>
+
+
+</launch>
+
+
