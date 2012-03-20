@@ -188,7 +188,7 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 	crawler.gcentroid_Y = GMy;
 	crawler.centroid_X = (BMx + GMx) / 2;
 	crawler.centroid_Y = (BMy + GMy) / 2;
-//	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::cout;
+	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::cout;
 	return true;
 }
 
@@ -220,7 +220,7 @@ inline bool VisionTracker::Mask2Gray(const Mask& mask, arma::mat& IMG) {
 
 inline bool VisionTracker::markCrawler(const sensor_msgs::ImageConstPtr& Origin_IMG, const Crawler& crawler) const{
 //	std::cout << "Crawler Centroid: " << crawler.centroid_X << ' ' << crawler.centroid_Y << std::endl;
-	std::cout << "RGB Time Stamp:" << Origin_IMG->header.stamp << std::endl;	
+//	std::cout << "RGB Time Stamp:" << Origin_IMG->header.stamp << std::endl;	
 	sensor_msgs::Image IMG = *Origin_IMG;
 
 	int wIMG = IMG.width;
@@ -345,7 +345,7 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 			arma::mat V_layer(2 * AreaSize, 2 * AreaSize);
 			arma::mat V_lap(2 * AreaSize, 2 * AreaSize);
 			RGB2V(msg, V_layer, LastCrawler.centroid_X, LastCrawler.centroid_Y, 2 * AreaSize);
-			debugImagePublish(PubImage,V_layer,"mono8");
+	//		debugImagePublish(PubImage,V_layer,"mono8");
 //		Laplacian(V_layer,V_lap);
 		}
 	 	bool Detected = DetectCrawler(Green_Mask,Blue_Mask,crawler);
@@ -368,12 +368,12 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		
 			// Publish Debug Image
 //		debugImagePublish(PubImage,V_layer,"mono8");
-//		arma::mat BMask_Gray(msg->height,msg->width);
-//		Mask2Gray(Blue_Mask,BMask_Gray);
-//		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
-//		arma::mat GMask_Gray(msg->height,msg->width);
-//		Mask2Gray(Green_Mask,GMask_Gray);
-//		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
+		arma::mat BMask_Gray(msg->height,msg->width);
+		Mask2Gray(Blue_Mask,BMask_Gray);
+		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
+		arma::mat GMask_Gray(msg->height,msg->width);
+		Mask2Gray(Green_Mask,GMask_Gray);
+		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
 //		arma::mat BKMask_Gray(msg->height,msg->width);
 //		Mask2Gray(Black_Mask,BKMask_Gray);
 //		debugImagePublish(PubImagebk,BKMask_Gray,"mono8");
