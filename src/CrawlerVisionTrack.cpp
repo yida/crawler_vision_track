@@ -16,7 +16,7 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 ,PubImagebk(it_.advertise("debug_image_bkmask",1))
 ,PubImagegr(it_.advertise("debug_image_grmask",1))
 ,DebugMsgs(node.advertise<crawler_vision_track::ImageDebug>("debug_msgs",100))
-
+//,socket(io_service)
 ,curFrame()
 ,debug()
 ,FIRST_FRAME(true)
@@ -34,15 +34,25 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 				 << 0.03222695 << 0.0644539 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr;
 	GauKer = GauKer/arma::accu(GauKer);
 
-	node.getParam("BlueMaskThreshold/Red",BlueMaskThresR);
-	node.getParam("BlueMaskThreshold/Green",BlueMaskThresG);
-	node.getParam("BlueMaskThreshold/Blue",BlueMaskThresB);
-	node.getParam("GreenMaskThreshold/Red",GreenMaskThresR);
-	node.getParam("GreenMaskThreshold/Green",GreenMaskThresG);
-	node.getParam("GreenMaskThreshold/Blue",GreenMaskThresB);
-	node.getParam("BlackMaskThreshold/Red",BlackMaskThresR);
-	node.getParam("BlackMaskThreshold/Green",BlackMaskThresG);
-	node.getParam("BlackMaskThreshold/Blue",BlackMaskThresB);
+	node.getParam("BlueMaskThreshold/Red", BlueMaskThresR);
+	node.getParam("BlueMaskThreshold/Green", BlueMaskThresG);
+	node.getParam("BlueMaskThreshold/Blue", BlueMaskThresB);
+	node.getParam("GreenMaskThreshold/Red", GreenMaskThresR);
+	node.getParam("GreenMaskThreshold/Green", GreenMaskThresG);
+	node.getParam("GreenMaskThreshold/Blue", GreenMaskThresB);
+	node.getParam("BlackMaskThreshold/Red", BlackMaskThresR);
+	node.getParam("BlackMaskThreshold/Green", BlackMaskThresG);
+	node.getParam("BlackMaskThreshold/Blue", BlackMaskThresB);
+//	node.getParam("ClientIP", Client_IP);
+//	Client_IP = "192.168.129.207";
+	
+//	ROS_INFO("IP Broadcast: %s", Client_IP.c_str());
+//
+//	udp::resolver resolver(io_service);
+//	udp::resolver::query query(udp::v4(), Client_IP, "9750");
+//	receiver_endpoint = *(resolver.resolve(query));
+//
+//	socket.open(udp::v4());
 
 	// Initiate Crawler
 	LastCrawler.centroid_X = 0;
@@ -185,6 +195,21 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 //-------------------
 // Debug Msg Publish
 //-------------------
+//bool VisionTracker::CrawlerPublish(const Crawler& crawler) {
+//	std::stringstream strm;
+//	std::string str;
+//	strm << crawler.centroid_X << ' ' << crawler.centroid_Y;
+//	strm >> str;
+//	try {
+//		socket.send_to(boost::asio::buffer(str), receiver_endpoint);
+//	}
+//	catch (std::exception& e) {
+//		std::cerr << e.what() << std::endl;
+//	}
+////	std::cout << str << std::endl;
+//	return true;
+//}
+
 inline bool VisionTracker::Mask2Gray(const Mask& mask, arma::mat& IMG) {
 	IMG.fill(0.0);
 	for (size_t iter = 0; iter < mask.size(); iter++) {
@@ -294,6 +319,11 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	Mask Blue_Mask;
 	Mask Green_Mask;
 	Mask Black_Mask;
+
+	// Test UDP
+//	crawler.centroid_X = 300;
+//	crawler.centroid_Y = 452;
+//	CrawlerPublish(crawler);
 
 	int AreaSize = 50; // Interest Area Size
 	

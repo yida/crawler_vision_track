@@ -13,6 +13,10 @@
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/String.h>
 #include <crawler_vision_track/ImageDebug.h>
+//#include <boost/asio.hpp>
+//#include <boost/array.hpp>
+
+//using boost::asio::ip::udp;
 
 struct Crawler {
 	double likelihood;
@@ -51,13 +55,18 @@ private:
 	image_transport::Publisher PubImagebu;
 	image_transport::Publisher PubImagebk;
 	image_transport::Publisher PubImagegr;
-
 	// Debug Msgs Publish
 	ros::Publisher DebugMsgs;
+
+//	boost::asio::io_service io_service;
+//	udp::endpoint receiver_endpoint;
+//	udp::socket socket;
+
 
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
 
 	bool debugImagePublish(image_transport::Publisher& Pub, arma::mat& IMG, std::string Type);
+//	bool CrawlerPublish(const Crawler& crawler);
 	inline bool markCrawler(const sensor_msgs::ImageConstPtr& Origin_IMG, const Crawler& cralwer) const;
 	inline bool Mask2Gray(const Mask& mask, arma::mat& IMG);
 	
@@ -86,6 +95,7 @@ private:
 	int	BlackMaskThresR;
 	int	BlackMaskThresG;
 	int	BlackMaskThresB;	
+//	std::string Client_IP;
 
 };
 
