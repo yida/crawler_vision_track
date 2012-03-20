@@ -25,8 +25,8 @@ struct Crawler {
 };
 
 struct Pixel {
-	size_t width;
-	size_t height;
+	int width;
+	int height;
 };
 
 typedef std::vector<Pixel> Mask;
@@ -41,12 +41,13 @@ class VisionTracker {
 public:
 	VisionTracker(ros::NodeHandle &);
 	~VisionTracker();
-	void Track(size_t rate);
+	void Track(int rate);
 
 private:
 	image_transport::ImageTransport it_;
 	image_transport::Subscriber SubImage;
 	image_transport::Publisher PubImage;
+	image_transport::Publisher PubImagergb;
 	image_transport::Publisher PubImagebu;
 	image_transport::Publisher PubImagebk;
 	image_transport::Publisher PubImagegr;
@@ -61,7 +62,7 @@ private:
 	inline bool Mask2Gray(const Mask& mask, arma::mat& IMG);
 	
 	inline bool MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, Mask& BMask, Mask& GMask, Mask& BKMask);
-	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V);
+	inline bool RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::mat& V, const int& centroid_X, const int& centroid_Y, const int& AreaSize);
 	inline bool Laplacian(const arma::mat& V, arma::mat& Lap);
 	inline bool DetectCrawler(const Mask G, const Mask B, Crawler& crawler);
 	sensor_msgs::Image curFrame;
@@ -71,20 +72,20 @@ private:
 	crawler_vision_track::ImageDebug debug;
 
 	bool FIRST_FRAME;
-	size_t maxCrawlers;
+	int maxCrawlers;
 	long frame_count;
 	arma::mat GauKer;
 	Crawler LastCrawler;
 	
-	int BlueMaskThresR;
-	int BlueMaskThresG;
-	int BlueMaskThresB;
-	int GreenMaskThresR;
-	int GreenMaskThresG;
-	int GreenMaskThresB;
-	int BlackMaskThresR;
-	int BlackMaskThresG;
-	int BlackMaskThresB;	
+	int	BlueMaskThresR;
+	int	BlueMaskThresG;
+	int	BlueMaskThresB;
+	int	GreenMaskThresR;
+	int	GreenMaskThresG;
+	int	GreenMaskThresB;
+	int	BlackMaskThresR;
+	int	BlackMaskThresG;
+	int	BlackMaskThresB;	
 
 };
 
