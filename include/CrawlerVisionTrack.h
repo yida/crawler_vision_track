@@ -11,6 +11,7 @@
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
+#include <geometry_msgs/Point.h>
 #include <std_msgs/String.h>
 #include <crawler_vision_track/ImageDebug.h>
 #include <crawler_vision_track/CrawlerMsgs.h>
@@ -59,6 +60,8 @@ private:
 	// Debug Msgs Publish
 	ros::Publisher DebugMsgs;
 	ros::Publisher CrawlerMsgs;
+	ros::Publisher CrawlerCentroid;
+	ros::Publisher CrawlerBearing;
 
 //	boost::asio::io_service io_service;
 //	udp::endpoint receiver_endpoint;

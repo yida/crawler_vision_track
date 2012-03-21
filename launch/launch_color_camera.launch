@@ -22,8 +22,7 @@
 	<!-- Vision Tracker -->
 	<node pkg="crawler_vision_track" type="crawler_vision_track" 
 							name="crawler_vision_track" output="screen">
-
-	<rosparam file="$(find crawler_vision_track)/config/vision_track_parameters.yaml"/>
+			<rosparam file="$(find crawler_vision_track)/config/vision_track_parameters.yaml"/>
   </node>
 </launch>
 

@@ -11,12 +11,23 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 :it_(node)
 ,SubImage(it_.subscribe("camera/image_color",1,&VisionTracker::ImageProc, this))
 ,PubImagergb(it_.advertise("debug_image_rgb",1))
-,CrawlerMsgs(node.advertise<crawler_vision_track::CrawlerMsgs>("crawler_msgs",100))
+,CrawlerMsgs(node.advertise<crawler_vision_track::CrawlerMsgs>("crawler_msgs", 100))
+,CrawlerCentroid(node.advertise<geometry_msgs::Point>("crawler_centroid", 100))
+,CrawlerBearing(node.advertise<geometry_msgs::Point>("crawler_bearing", 100))
 ,curFrame()
 ,debug()
 ,FIRST_FRAME(true)
 ,maxCrawlers(10)
 ,frame_count(0)
+,BlueMaskThresR(200)
+,BlueMaskThresG(200)
+,BlueMaskThresB(200)
+,GreenMaskThresR(180)
+,GreenMaskThresG(180)
+,GreenMaskThresB(180)
+,BlackMaskThresR(80)
+,BlackMaskThresG(80)
+,BlackMaskThresB(80)
 {
 	GauKer << 0.03222695 << 0.0644530 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr
 				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
@@ -42,6 +53,17 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 	node.getParam("BlackMaskThreshold/Red", BlackMaskThresR);
 	node.getParam("BlackMaskThreshold/Green", BlackMaskThresG);
 	node.getParam("BlackMaskThreshold/Blue", BlackMaskThresB);
+
+	ROS_INFO("BlueMaskThreshold/Red %d", BlueMaskThresR);
+	ROS_INFO("BlueMaskThreshold/Green %d", BlueMaskThresG);
+	ROS_INFO("BlueMaskThreshold/Blue %d", BlueMaskThresB);
+	ROS_INFO("GreenMaskThreshold/Red %d", GreenMaskThresR);
+	ROS_INFO("GreenMaskThreshold/Green %d", GreenMaskThresG);
+	ROS_INFO("GreenMaskThreshold/Blue %d", GreenMaskThresB);
+	ROS_INFO("BlackMaskThreshold/Red %d", BlackMaskThresR);
+	ROS_INFO("BlackMaskThreshold/Green %d", BlackMaskThresG);
+	ROS_INFO("BlackMaskThreshold/Blue %d", BlackMaskThresB);
+
 
 	// Initiate Crawler
 	LastCrawler.centroid_X = 0;
@@ -178,22 +200,39 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 //-------------------
 bool VisionTracker::CrawlerPublish(const sensor_msgs::ImageConstPtr& IMG, const Crawler& crawler) {
 	crawler_vision_track::CrawlerMsgs cralwerMsgs;	
+	geometry_msgs::Point crawlerCentroid;
+	geometry_msgs::Point crawlerBearing;
+
 	cralwerMsgs.header = IMG->header;
 	cralwerMsgs.centroidX = crawler.centroid_X;
 	cralwerMsgs.centroidY = crawler.centroid_Y;
+
 	double fx = CamMatrix(0,0);
 	double fy = CamMatrix(1,1);
 	double cx = CamMatrix(0,2);
 	double cy = CamMatrix(1,2); 
 
-	cralwerMsgs.bearingX = (crawler.centroid_X - cx) / fx;
-	cralwerMsgs.bearingY = (crawler.centroid_Y - cy) / fy;
+	double bearingX = (crawler.centroid_X - cx) / fx;
+	double bearingY = (crawler.centroid_Y - cy) / fy;
+	
+	cralwerMsgs.bearingX = bearingX;
+	cralwerMsgs.bearingY = bearingY;
 	cralwerMsgs.fx = fx;
 	cralwerMsgs.fy = fy;
 	cralwerMsgs.cx = cx;
 	cralwerMsgs.cy = cy; 
-	
 	CrawlerMsgs.publish(cralwerMsgs);	
+
+	crawlerCentroid.x = crawler.centroid_X;
+	crawlerCentroid.y = crawler.centroid_Y;
+	crawlerCentroid.z = 0;
+	CrawlerCentroid.publish(crawlerCentroid);
+
+	crawlerBearing.x = bearingX;
+	crawlerBearing.y = bearingY;
+	crawlerBearing.z = 0;
+	CrawlerBearing.publish(crawlerBearing);
+
 	return true;
 }
 
@@ -326,7 +365,7 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 
 		if (Detected) {
 			LastCrawler = crawler;
-			markCrawler(msg, crawler);
+		//	markCrawler(msg, crawler);
 			CrawlerPublish(msg, crawler);
 		}
 
@@ -350,7 +389,7 @@ int main(int argc, char **argv)
 	VisionTracker tracker(nh_);
 
 	ROS_INFO("Setup Done!");
-
+	
 	tracker.Track(15);
 	return 0;
 }
