@@ -10,12 +10,12 @@ bool SortCrawler::operator() (Crawler& C1, Crawler& C2) {
 VisionTracker::VisionTracker(ros::NodeHandle& node)
 :it_(node)
 ,SubImage(it_.subscribe("camera/image_color",1,&VisionTracker::ImageProc, this))
-,PubImage(it_.advertise("debug_image",1))
+//,PubImage(it_.advertise("debug_image",1))
 ,PubImagergb(it_.advertise("debug_image_rgb",1))
-,PubImagebu(it_.advertise("debug_image_bumask",1))
-,PubImagebk(it_.advertise("debug_image_bkmask",1))
-,PubImagegr(it_.advertise("debug_image_grmask",1))
-,DebugMsgs(node.advertise<crawler_vision_track::ImageDebug>("debug_msgs",100))
+//,PubImagebu(it_.advertise("debug_image_bumask",1))
+//,PubImagebk(it_.advertise("debug_image_bkmask",1))
+//,PubImagegr(it_.advertise("debug_image_grmask",1))
+//,DebugMsgs(node.advertise<crawler_vision_track::ImageDebug>("debug_msgs",100))
 //,socket(io_service)
 ,curFrame()
 ,debug()
@@ -188,7 +188,7 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 	crawler.gcentroid_Y = GMy;
 	crawler.centroid_X = (BMx + GMx) / 2;
 	crawler.centroid_Y = (BMy + GMy) / 2;
-	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::cout;
+	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::endl;
 	return true;
 }
 
@@ -340,8 +340,8 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		MaskGenerate(msg,Blue_Mask,Green_Mask,Black_Mask);
 //		std::cout << LastCrawler.likelihood << std::endl;
 		if (LastCrawler.likelihood == 1) {
-			std::cout << "Have Last Boundingbox at " << LastCrawler.centroid_X;
-			std::cout << ' ' << LastCrawler.centroid_Y << std::endl; 
+//			std::cout << "Have Last Boundingbox at " << LastCrawler.centroid_X;
+//			std::cout << ' ' << LastCrawler.centroid_Y << std::endl; 
 			arma::mat V_layer(2 * AreaSize, 2 * AreaSize);
 			arma::mat V_lap(2 * AreaSize, 2 * AreaSize);
 			RGB2V(msg, V_layer, LastCrawler.centroid_X, LastCrawler.centroid_Y, 2 * AreaSize);
@@ -368,12 +368,12 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		
 			// Publish Debug Image
 //		debugImagePublish(PubImage,V_layer,"mono8");
-		arma::mat BMask_Gray(msg->height,msg->width);
-		Mask2Gray(Blue_Mask,BMask_Gray);
-		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
-		arma::mat GMask_Gray(msg->height,msg->width);
-		Mask2Gray(Green_Mask,GMask_Gray);
-		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
+//		arma::mat BMask_Gray(msg->height,msg->width);
+//		Mask2Gray(Blue_Mask,BMask_Gray);
+//		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
+//		arma::mat GMask_Gray(msg->height,msg->width);
+//		Mask2Gray(Green_Mask,GMask_Gray);
+//		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
 //		arma::mat BKMask_Gray(msg->height,msg->width);
 //		Mask2Gray(Black_Mask,BKMask_Gray);
 //		debugImagePublish(PubImagebk,BKMask_Gray,"mono8");
