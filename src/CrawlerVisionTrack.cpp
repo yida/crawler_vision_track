@@ -10,14 +10,8 @@ bool SortCrawler::operator() (Crawler& C1, Crawler& C2) {
 VisionTracker::VisionTracker(ros::NodeHandle& node)
 :it_(node)
 ,SubImage(it_.subscribe("camera/image_color",1,&VisionTracker::ImageProc, this))
-//,PubImage(it_.advertise("debug_image",1))
 ,PubImagergb(it_.advertise("debug_image_rgb",1))
-//,PubImagebu(it_.advertise("debug_image_bumask",1))
-//,PubImagebk(it_.advertise("debug_image_bkmask",1))
-//,PubImagegr(it_.advertise("debug_image_grmask",1))
-//,DebugMsgs(node.advertise<crawler_vision_track::ImageDebug>("debug_msgs",100))
 ,CrawlerMsgs(node.advertise<crawler_vision_track::CrawlerMsgs>("crawler_msgs",100))
-//,socket(io_service)
 ,curFrame()
 ,debug()
 ,FIRST_FRAME(true)
@@ -48,16 +42,6 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 	node.getParam("BlackMaskThreshold/Red", BlackMaskThresR);
 	node.getParam("BlackMaskThreshold/Green", BlackMaskThresG);
 	node.getParam("BlackMaskThreshold/Blue", BlackMaskThresB);
-//	node.getParam("ClientIP", Client_IP);
-//	Client_IP = "192.168.129.207";
-	
-//	ROS_INFO("IP Broadcast: %s", Client_IP.c_str());
-//
-//	udp::resolver resolver(io_service);
-//	udp::resolver::query query(udp::v4(), Client_IP, "9750");
-//	receiver_endpoint = *(resolver.resolve(query));
-//
-//	socket.open(udp::v4());
 
 	// Initiate Crawler
 	LastCrawler.centroid_X = 0;
@@ -109,24 +93,18 @@ inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::ma
 																	const int& centroid_X, const int& centroid_Y, const int& Size){
 	int hIMG = RGB->height;
 	int wIMG = RGB->width;
-//	int AreaScale = 2;
 	int	top_X = centroid_X - Size / 2;
 	int	top_Y = centroid_Y - Size / 2;
 	int bot_X = centroid_X + Size / 2;
 	int bot_Y = centroid_Y + Size / 2;
 	int top_X_off = (top_X < 0)? -top_X : 0;
 	int top_Y_off = (top_Y < 0)? -top_Y : 0;
-//	std::cout << V.n_rows << ' ' << V.n_cols << std::endl;
-//	std::cout << top_X << ' ' << top_Y << ' ' << bot_X << ' ' << bot_Y << std::endl;
 //	int bot_X_off = (bot_X > wIMG)? (bot_X - wIMG) : 0;
 //	int bot_Y_off = (bot_Y > hIMG)? (bot_Y - hIMG) : 0; 
 	top_X = std::max(0, top_X);
 	top_Y = std::max(0, top_Y);
 	bot_X = std::min(wIMG, bot_X);
 	bot_Y = std::min(hIMG, bot_Y);
-//	std::cout << top_X << ' ' << top_Y << ' ' << bot_X << ' ' << bot_Y << std::endl;
-//	std::cout << top_X_off << ' ' << top_Y_off << ' ' << bot_X_off << ' ' << bot_Y_off << ' ';
-//	std::cout << bot_X - top_X << ' ' << bot_Y - top_Y << std::endl;
 	int idxRGB = 0; 
 	unsigned char Brightness = 0;
 	for (int w = top_X; w < bot_X; w++) 
@@ -135,8 +113,6 @@ inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::ma
 			Brightness = RGB->data[idxRGB];
 			Brightness = std::max(Brightness, RGB->data[idxRGB+1]);
 			Brightness = std::max(Brightness, RGB->data[idxRGB+2]);		
-//			std::cout << top_X_off << ' ' << top_Y_off << ' ';
-//			std::cout <<  w - top_X + top_X_off << ' ' << h - top_Y + top_Y_off << std::endl;
 			V(h - top_Y + top_Y_off, w - top_X + top_X_off) = Brightness;
 		}
 	return true;
@@ -201,19 +177,6 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 // Debug Msg Publish
 //-------------------
 bool VisionTracker::CrawlerPublish(const sensor_msgs::ImageConstPtr& IMG, const Crawler& crawler) {
-/* Broadcast through udp
-	std::stringstream strm;
-	std::string str;
-	strm << crawler.centroid_X << ' ' << crawler.centroid_Y;
-	strm >> str;
-	try {
-		socket.send_to(boost::asio::buffer(str), receiver_endpoint);
-	}
-	catch (std::exception& e) {
-		std::cerr << e.what() << std::endl;
-	}
-//	std::cout << str << std::endl;
-*/
 		
 	return true;
 }
@@ -227,8 +190,6 @@ inline bool VisionTracker::Mask2Gray(const Mask& mask, arma::mat& IMG) {
 }
 
 inline bool VisionTracker::markCrawler(const sensor_msgs::ImageConstPtr& Origin_IMG, const Crawler& crawler) const{
-//	std::cout << "Crawler Centroid: " << crawler.centroid_X << ' ' << crawler.centroid_Y << std::endl;
-//	std::cout << "RGB Time Stamp:" << Origin_IMG->header.stamp << std::endl;	
 	sensor_msgs::Image IMG = *Origin_IMG;
 
 	int wIMG = IMG.width;
@@ -274,7 +235,6 @@ inline bool VisionTracker::markCrawler(const sensor_msgs::ImageConstPtr& Origin_
 	int lineEdp = std::min(wIMG, std::max(crawler.bcentroid_X, crawler.gcentroid_X) + lineLen);	
 	double lineSlopeDenum = crawler.bcentroid_X - crawler.gcentroid_X;
 //	if (lineSlopeDenum == 0)	
-//		std::cout << "Perpendicular" << std::endl;
 	if (lineSlopeDenum == 0) {
 		width = 3 * crawler.bcentroid_X;
 		lineStp = std::max(0, std::min(crawler.bcentroid_Y, crawler.gcentroid_Y) - lineLen);
@@ -328,11 +288,6 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	Mask Green_Mask;
 	Mask Black_Mask;
 
-	// Test UDP
-//	crawler.centroid_X = 300;
-//	crawler.centroid_Y = 452;
-//	CrawlerPublish(crawler);
-
 	int AreaSize = 50; // Interest Area Size
 	
 	if (!imageType.compare("bgr8"))
@@ -346,19 +301,12 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		}
 
 		MaskGenerate(msg,Blue_Mask,Green_Mask,Black_Mask);
-//		std::cout << LastCrawler.likelihood << std::endl;
 		if (LastCrawler.likelihood == 1) {
-//			std::cout << "Have Last Boundingbox at " << LastCrawler.centroid_X;
-//			std::cout << ' ' << LastCrawler.centroid_Y << std::endl; 
 			arma::mat V_layer(2 * AreaSize, 2 * AreaSize);
 			arma::mat V_lap(2 * AreaSize, 2 * AreaSize);
 			RGB2V(msg, V_layer, LastCrawler.centroid_X, LastCrawler.centroid_Y, 2 * AreaSize);
-	//		debugImagePublish(PubImage,V_layer,"mono8");
-//		Laplacian(V_layer,V_lap);
 		}
 	 	bool Detected = DetectCrawler(Green_Mask,Blue_Mask,crawler);
-//			LastCrawler = crawler;
-//		std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::cout;
 
 		if (Detected) {
 			LastCrawler = crawler;
@@ -366,30 +314,6 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 			CrawlerPublish(msg, crawler);
 		}
 
-
-		// Debug Msgs
-//		debug.header.stamp = ros::Time::now();
-//		debug.header.frame_id = "debug_msgs";
-//		debug.Vwidth = V_layer.n_cols;
-//		debug.Vheight = V_layer.n_rows;
-//		debug.VpackageSize = V_layer.size();
-//		DebugMsgs.publish(debug);
-		
-			// Publish Debug Image
-//		debugImagePublish(PubImage,V_layer,"mono8");
-//		arma::mat BMask_Gray(msg->height,msg->width);
-//		Mask2Gray(Blue_Mask,BMask_Gray);
-//		debugImagePublish(PubImagebu,BMask_Gray,"mono8");
-//		arma::mat GMask_Gray(msg->height,msg->width);
-//		Mask2Gray(Green_Mask,GMask_Gray);
-//		debugImagePublish(PubImagegr,GMask_Gray,"mono8");	
-//		arma::mat BKMask_Gray(msg->height,msg->width);
-//		Mask2Gray(Black_Mask,BKMask_Gray);
-//		debugImagePublish(PubImagebk,BKMask_Gray,"mono8");
-		
-//		arma::mat IMG_Label(msg->height,msg->step);
-//		markCrawler(msg,crawler);
-//		debugImagePublish(PubImage,IMG_Label,"bgr8");
 	}
 }
 
