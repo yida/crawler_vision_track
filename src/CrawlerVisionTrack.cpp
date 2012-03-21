@@ -169,7 +169,7 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 	crawler.gcentroid_Y = GMy;
 	crawler.centroid_X = (BMx + GMx) / 2;
 	crawler.centroid_Y = (BMy + GMy) / 2;
-	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::endl;
+//	std::cout << crawler.centroid_X << ' ' << crawler.centroid_Y << std::endl;
 	return true;
 }
 
@@ -177,7 +177,23 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 // Debug Msg Publish
 //-------------------
 bool VisionTracker::CrawlerPublish(const sensor_msgs::ImageConstPtr& IMG, const Crawler& crawler) {
-		
+	crawler_vision_track::CrawlerMsgs cralwerMsgs;	
+	cralwerMsgs.header = IMG->header;
+	cralwerMsgs.centroidX = crawler.centroid_X;
+	cralwerMsgs.centroidY = crawler.centroid_Y;
+	double fx = CamMatrix(0,0);
+	double fy = CamMatrix(1,1);
+	double cx = CamMatrix(0,2);
+	double cy = CamMatrix(1,2); 
+
+	cralwerMsgs.bearingX = (crawler.centroid_X - cx) / fx;
+	cralwerMsgs.bearingY = (crawler.centroid_Y - cy) / fy;
+	cralwerMsgs.fx = fx;
+	cralwerMsgs.fy = fy;
+	cralwerMsgs.cx = cx;
+	cralwerMsgs.cy = cy; 
+	
+	CrawlerMsgs.publish(cralwerMsgs);	
 	return true;
 }
 
