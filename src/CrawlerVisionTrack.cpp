@@ -14,6 +14,10 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 ,CrawlerMsgs(node.advertise<crawler_vision_track::CrawlerMsgs>("crawler_msgs", 100))
 ,CrawlerCentroid(node.advertise<geometry_msgs::Point>("crawler_centroid", 100))
 ,CrawlerBearing(node.advertise<geometry_msgs::Point>("crawler_bearing", 100))
+,CrawlerCentroidBlue(node.advertise<geometry_msgs::Point>("crawler_centroid_blue", 100))
+,CrawlerBearingBlue(node.advertise<geometry_msgs::Point>("crawler_bearing_blue", 100))
+,CrawlerCentroidGreen(node.advertise<geometry_msgs::Point>("crawler_centroid_green", 100))
+,CrawlerBearingGreen(node.advertise<geometry_msgs::Point>("crawler_bearing_green", 100))
 ,curFrame()
 ,debug()
 ,FIRST_FRAME(true)
@@ -202,6 +206,10 @@ bool VisionTracker::CrawlerPublish(const sensor_msgs::ImageConstPtr& IMG, const 
 	crawler_vision_track::CrawlerMsgs cralwerMsgs;	
 	geometry_msgs::Point crawlerCentroid;
 	geometry_msgs::Point crawlerBearing;
+	geometry_msgs::Point crawlerCentroidBlue;
+	geometry_msgs::Point crawlerBearingBlue;
+	geometry_msgs::Point crawlerCentroidGreen;
+	geometry_msgs::Point crawlerBearingGreen;
 
 	cralwerMsgs.header = IMG->header;
 	cralwerMsgs.centroidX = crawler.centroid_X;
@@ -233,6 +241,31 @@ bool VisionTracker::CrawlerPublish(const sensor_msgs::ImageConstPtr& IMG, const 
 	crawlerBearing.z = 0;
 	CrawlerBearing.publish(crawlerBearing);
 
+	double bearingXBlue = (crawler.bcentroid_X - cx) / fx;
+	double bearingYBlue = (crawler.bcentroid_Y - cy) / fy;
+
+	crawlerCentroidBlue.x = crawler.bcentroid_X;
+	crawlerCentroidBlue.y = crawler.bcentroid_Y;
+	crawlerCentroidBlue.z = 0;
+	CrawlerCentroidBlue.publish(crawlerCentroidBlue);
+
+	crawlerBearingBlue.x = bearingXBlue;
+	crawlerBearingBlue.y = bearingYBlue;
+	crawlerBearingBlue.z = 0;
+	CrawlerBearingBlue.publish(crawlerBearingBlue);
+
+	double bearingXGreen = (crawler.gcentroid_X - cx) / fx;
+	double bearingYGreen = (crawler.gcentroid_Y - cy) / fy;
+
+	crawlerCentroidGreen.x = crawler.gcentroid_X;
+	crawlerCentroidGreen.y = crawler.gcentroid_Y;
+	crawlerCentroidGreen.z = 0;
+	CrawlerCentroidGreen.publish(crawlerCentroidGreen);
+
+	crawlerBearingGreen.x = bearingXGreen;
+	crawlerBearingGreen.y = bearingYGreen;
+	crawlerBearingGreen.z = 0;
+	CrawlerBearingGreen.publish(crawlerBearingGreen);
 	return true;
 }
 

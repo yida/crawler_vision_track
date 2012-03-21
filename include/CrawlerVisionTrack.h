@@ -62,6 +62,12 @@ private:
 	ros::Publisher CrawlerMsgs;
 	ros::Publisher CrawlerCentroid;
 	ros::Publisher CrawlerBearing;
+	ros::Publisher CrawlerCentroidBlue;
+	ros::Publisher CrawlerBearingBlue;
+	ros::Publisher CrawlerCentroidGreen;
+	ros::Publisher CrawlerBearingGreen;
+
+
 
 //	boost::asio::io_service io_service;
 //	udp::endpoint receiver_endpoint;
