@@ -16,6 +16,7 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 //,PubImagebk(it_.advertise("debug_image_bkmask",1))
 //,PubImagegr(it_.advertise("debug_image_grmask",1))
 //,DebugMsgs(node.advertise<crawler_vision_track::ImageDebug>("debug_msgs",100))
+,CrawlerMsgs(node.advertise<crawler_vision_track::CrawlerMsgs>("crawler_msgs",100))
 //,socket(io_service)
 ,curFrame()
 ,debug()
@@ -33,6 +34,10 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
 				 << 0.03222695 << 0.0644539 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr;
 	GauKer = GauKer/arma::accu(GauKer);
+
+	CamMatrix << 993.081692 << 0 << 286.532346 << arma::endr 
+						<< 0 << 994.980658 << 260.524462 << arma::endr
+						<< 0 << 0 << 1 << arma::endr; 
 
 	node.getParam("BlueMaskThreshold/Red", BlueMaskThresR);
 	node.getParam("BlueMaskThreshold/Green", BlueMaskThresG);
@@ -113,8 +118,8 @@ inline bool VisionTracker::RGB2V(const sensor_msgs::ImageConstPtr& RGB, arma::ma
 	int top_Y_off = (top_Y < 0)? -top_Y : 0;
 //	std::cout << V.n_rows << ' ' << V.n_cols << std::endl;
 //	std::cout << top_X << ' ' << top_Y << ' ' << bot_X << ' ' << bot_Y << std::endl;
-	int bot_X_off = (bot_X > wIMG)? (bot_X - wIMG) : 0;
-	int bot_Y_off = (bot_Y > hIMG)? (bot_Y - hIMG) : 0; 
+//	int bot_X_off = (bot_X > wIMG)? (bot_X - wIMG) : 0;
+//	int bot_Y_off = (bot_Y > hIMG)? (bot_Y - hIMG) : 0; 
 	top_X = std::max(0, top_X);
 	top_Y = std::max(0, top_Y);
 	bot_X = std::min(wIMG, bot_X);
@@ -195,20 +200,23 @@ inline bool VisionTracker::DetectCrawler(const Mask G, const Mask B, Crawler& cr
 //-------------------
 // Debug Msg Publish
 //-------------------
-//bool VisionTracker::CrawlerPublish(const Crawler& crawler) {
-//	std::stringstream strm;
-//	std::string str;
-//	strm << crawler.centroid_X << ' ' << crawler.centroid_Y;
-//	strm >> str;
-//	try {
-//		socket.send_to(boost::asio::buffer(str), receiver_endpoint);
-//	}
-//	catch (std::exception& e) {
-//		std::cerr << e.what() << std::endl;
-//	}
-////	std::cout << str << std::endl;
-//	return true;
-//}
+bool VisionTracker::CrawlerPublish(const sensor_msgs::ImageConstPtr& IMG, const Crawler& crawler) {
+/* Broadcast through udp
+	std::stringstream strm;
+	std::string str;
+	strm << crawler.centroid_X << ' ' << crawler.centroid_Y;
+	strm >> str;
+	try {
+		socket.send_to(boost::asio::buffer(str), receiver_endpoint);
+	}
+	catch (std::exception& e) {
+		std::cerr << e.what() << std::endl;
+	}
+//	std::cout << str << std::endl;
+*/
+		
+	return true;
+}
 
 inline bool VisionTracker::Mask2Gray(const Mask& mask, arma::mat& IMG) {
 	IMG.fill(0.0);
@@ -354,7 +362,8 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 
 		if (Detected) {
 			LastCrawler = crawler;
-			markCrawler(msg,crawler);
+			markCrawler(msg, crawler);
+			CrawlerPublish(msg, crawler);
 		}
 
 

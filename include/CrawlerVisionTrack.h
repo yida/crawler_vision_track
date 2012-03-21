@@ -13,6 +13,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/String.h>
 #include <crawler_vision_track/ImageDebug.h>
+#include <crawler_vision_track/CrawlerMsgs.h>
 //#include <boost/asio.hpp>
 //#include <boost/array.hpp>
 
@@ -57,6 +58,7 @@ private:
 	image_transport::Publisher PubImagegr;
 	// Debug Msgs Publish
 	ros::Publisher DebugMsgs;
+	ros::Publisher CrawlerMsgs;
 
 //	boost::asio::io_service io_service;
 //	udp::endpoint receiver_endpoint;
@@ -66,7 +68,7 @@ private:
 	void ImageProc(const sensor_msgs::ImageConstPtr& msg);
 
 	bool debugImagePublish(image_transport::Publisher& Pub, arma::mat& IMG, std::string Type);
-//	bool CrawlerPublish(const Crawler& crawler);
+	bool CrawlerPublish(const sensor_msgs::ImageConstPtr& IMG, const Crawler& crawler);
 	inline bool markCrawler(const sensor_msgs::ImageConstPtr& Origin_IMG, const Crawler& cralwer) const;
 	inline bool Mask2Gray(const Mask& mask, arma::mat& IMG);
 	
@@ -85,6 +87,8 @@ private:
 	long frame_count;
 	arma::mat GauKer;
 	Crawler LastCrawler;
+
+	arma::mat CamMatrix;
 	
 	int	BlueMaskThresR;
 	int	BlueMaskThresG;

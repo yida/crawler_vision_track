@@ -1,0 +1,9 @@
+Header header
+int32 centroidX
+int32 centroidY
+float32 bearingX
+float32 bearingY
+float32 fx
+float32 fy
+float32 cx
+float32 cy
