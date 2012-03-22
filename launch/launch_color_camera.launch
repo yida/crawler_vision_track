@@ -24,6 +24,15 @@
 							name="crawler_vision_track" output="screen">
 			<rosparam file="$(find crawler_vision_track)/config/vision_track_parameters.yaml"/>
   </node>
+
+	<node pkg="crawler_vision_track" type="servo_pwm_control" 
+							name="servo_pwm_control" output="screen">
+		<rosparam file="$(find crawler_vision_track)/config/servo_parameters.yaml"/>
+		<remap from="/module_dir" to="/servo_pwm_control/module_dir"/>
+		<remap from="/servo_max" to="/servo_pwm_control/servo_max" />
+		<remap from="/servo_min" to="/servo_pwm_control/servo_min" />
+  </node>
+
 </launch>
 
 

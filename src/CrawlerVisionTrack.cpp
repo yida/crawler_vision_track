@@ -33,16 +33,16 @@ VisionTracker::VisionTracker(ros::NodeHandle& node)
 ,BlackMaskThresG(80)
 ,BlackMaskThresB(80)
 {
-	GauKer << 0.03222695 << 0.0644530 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr
-				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
-				 << 0.12890781 << 0.2578150 << 0.51563120 << 1.03126250 << 2.06252500 << 1.03126252 << 0.5156312 << 0.2578156 << 0.12890781 << arma::endr
-				 << 0.25781562 << 0.5156310 << 1.03126250 << 2.06252501 << 4.12505000 << 2.06252504 << 1.0312625 << 0.5156312 << 0.25781562 << arma::endr
-				 << 0.51563125 << 1.0312620 << 2.06252501 << 4.12505002 << 8.25010000 << 4.12505008 << 2.0625250 << 1.0312625 << 0.51563125 << arma::endr
-				 << 0.25781562 << 0.5156310 << 1.03126250 << 2.06252501 << 4.12505002 << 2.06252504 << 1.0312625 << 0.5156312 << 0.25781562 << arma::endr
-				 << 0.12890781 << 0.2578150 << 0.51563120 << 1.03126250 << 2.06252501 << 1.03126252 << 0.5156312 << 0.2578156 << 0.12890781 << arma::endr
-				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
-				 << 0.03222695 << 0.0644539 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr;
-	GauKer = GauKer/arma::accu(GauKer);
+//	GauKer << 0.03222695 << 0.0644530 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr
+//				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
+//				 << 0.12890781 << 0.2578150 << 0.51563120 << 1.03126250 << 2.06252500 << 1.03126252 << 0.5156312 << 0.2578156 << 0.12890781 << arma::endr
+//				 << 0.25781562 << 0.5156310 << 1.03126250 << 2.06252501 << 4.12505000 << 2.06252504 << 1.0312625 << 0.5156312 << 0.25781562 << arma::endr
+//				 << 0.51563125 << 1.0312620 << 2.06252501 << 4.12505002 << 8.25010000 << 4.12505008 << 2.0625250 << 1.0312625 << 0.51563125 << arma::endr
+//				 << 0.25781562 << 0.5156310 << 1.03126250 << 2.06252501 << 4.12505002 << 2.06252504 << 1.0312625 << 0.5156312 << 0.25781562 << arma::endr
+//				 << 0.12890781 << 0.2578150 << 0.51563120 << 1.03126250 << 2.06252501 << 1.03126252 << 0.5156312 << 0.2578156 << 0.12890781 << arma::endr
+//				 << 0.06445390 << 0.1289070 << 0.25781560 << 0.51563120 << 1.03126250 << 0.51563121 << 0.2578156 << 0.1289078 << 0.06445390 << arma::endr
+//				 << 0.03222695 << 0.0644539 << 0.12890780 << 0.25781560 << 0.51563120 << 0.25781560 << 0.1289078 << 0.0644539 << 0.03222695 << arma::endr;
+//	GauKer = GauKer/arma::accu(GauKer);
 
 	CamMatrix << 993.081692 << 0 << 286.532346 << arma::endr 
 						<< 0 << 994.980658 << 260.524462 << arma::endr
@@ -101,13 +101,13 @@ inline bool VisionTracker::MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, M
 			GMask.push_back(px);
 		}
 
-		if ((RGB->data[idxRGB]<BlackMaskThresB) && 
-				(RGB->data[idxRGB+1]<BlackMaskThresG) && 
-				(RGB->data[idxRGB+2]<BlackMaskThresR)) { 
-			px.height = idxV/RGB->width;
-			px.width = idxV%RGB->width;
-			BKMask.push_back(px);
-		}
+//		if ((RGB->data[idxRGB]<BlackMaskThresB) && 
+//				(RGB->data[idxRGB+1]<BlackMaskThresG) && 
+//				(RGB->data[idxRGB+2]<BlackMaskThresR)) { 
+//			px.height = idxV/RGB->width;
+//			px.width = idxV%RGB->width;
+//			BKMask.push_back(px);
+//		}
 		idxV++;
 	} 
 //	std::cout << "blueMask:" << BMask.size() << " GreenMask:" << GMask.size() << std::endl; 
@@ -370,7 +370,7 @@ bool VisionTracker::debugImagePublish(image_transport::Publisher& Pub, arma::mat
 
 void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	std::string imageType = msg->encoding;
-	curFrame = *msg;
+//	curFrame = *msg;
 	Crawler crawler = {0,0,0,0,0,0,0};
 	Mask Blue_Mask;
 	Mask Green_Mask;
@@ -389,11 +389,11 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		}
 
 		MaskGenerate(msg,Blue_Mask,Green_Mask,Black_Mask);
-		if (LastCrawler.likelihood == 1) {
-			arma::mat V_layer(2 * AreaSize, 2 * AreaSize);
-			arma::mat V_lap(2 * AreaSize, 2 * AreaSize);
-			RGB2V(msg, V_layer, LastCrawler.centroid_X, LastCrawler.centroid_Y, 2 * AreaSize);
-		}
+//		if (LastCrawler.likelihood == 1) {
+//			arma::mat V_layer(2 * AreaSize, 2 * AreaSize);
+//			arma::mat V_lap(2 * AreaSize, 2 * AreaSize);
+//			RGB2V(msg, V_layer, LastCrawler.centroid_X, LastCrawler.centroid_Y, 2 * AreaSize);
+//		}
 	 	bool Detected = DetectCrawler(Green_Mask,Blue_Mask,crawler);
 
 		if (Detected) {

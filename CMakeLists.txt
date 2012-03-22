@@ -31,4 +31,5 @@ rosbuild_genmsg()
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_executable(crawler_vision_track src/CrawlerVisionTrack.cpp)
+rosbuild_add_executable(servo_pwm_control src/ServoControl.cpp)
 #rosbuild_link_boost(crawler_vision_track system)
