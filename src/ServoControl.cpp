@@ -12,13 +12,17 @@ char command9[30];
 char command10[30];
 
 void servo_exit(void) {
-	system("/sbin/rmmod /home/root/pwm.ko");
+	int res = system("/sbin/rmmod /home/root/pwm.ko");
+	if (res != 0)
+		std::cout << "remod Error " << res << std::endl;
 }
 
 void servoCallback(const std_msgs::String::ConstPtr& msg) {
-	std::cout << msg->data << std::endl;
-//	system(msg->data.c_str());
-
+	//std::cout << msg->data << std::endl;
+	int res = system(msg->data.c_str());
+	if (res != 0) {
+		std::cout << "Error " << res << std::endl;
+	}
 }
 
 //void servoCallbacl(const geometry_msgs::Point:ConstPtr& msg) {
@@ -53,8 +57,9 @@ int main(int argc, char ** argv)
 					module_dir.c_str(), servo_min, servo_max);
 
 	setuid(0);
-	system(command);
-	std::cout << command << std::endl;
+	int res = system(command);
+	if (res != 0) 
+		std::cout << "insmod Error " << res << std::endl;
 
 	ros::spin();
 
