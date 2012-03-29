@@ -8,11 +8,9 @@
 
 	<!-- Bayer color decoding -->
   <node pkg="image_proc" type="image_proc" name="image_proc_debayer_local">
-			<!--
-	   	<remap from="image_color" to="camera_local/image_color" />
-			<remap from="image_mono" to="camera_local/image_mono" />
-			-->
-			<remap from="image_raw" to="camera/image_raw" />
+	   	<remap from="image_color" to="camera/image_color_local" />
+			<remap from="image_mono" to="camera/image_mono_local" />
+			<remap from="image_raw" to="camera/image_raw_slow" />
   </node>
 
 
