@@ -101,13 +101,13 @@ inline bool VisionTracker::MaskGenerate(const sensor_msgs::ImageConstPtr& RGB, M
 			GMask.push_back(px);
 		}
 
-		if ((RGB->data[idxRGB]<BlackMaskThresB) && 
-				(RGB->data[idxRGB+1]<BlackMaskThresG) && 
-				(RGB->data[idxRGB+2]<BlackMaskThresR)) { 
-			px.height = idxV/RGB->width;
-			px.width = idxV%RGB->width;
-			BKMask.push_back(px);
-		}
+//		if ((RGB->data[idxRGB]<BlackMaskThresB) && 
+//				(RGB->data[idxRGB+1]<BlackMaskThresG) && 
+//				(RGB->data[idxRGB+2]<BlackMaskThresR)) { 
+//			px.height = idxV/RGB->width;
+//			px.width = idxV%RGB->width;
+//			BKMask.push_back(px);
+//		}
 		idxV++;
 	} 
 //	std::cout << "blueMask:" << BMask.size() << " GreenMask:" << GMask.size() << std::endl; 
@@ -389,16 +389,17 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 		}
 
 		MaskGenerate(msg,Blue_Mask,Green_Mask,Black_Mask);
-		if (LastCrawler.likelihood == 1) {
-			arma::mat V_layer(2 * AreaSize, 2 * AreaSize);
-			arma::mat V_lap(2 * AreaSize, 2 * AreaSize);
-			RGB2V(msg, V_layer, LastCrawler.centroid_X, LastCrawler.centroid_Y, 2 * AreaSize);
-		}
+
+//		if (LastCrawler.likelihood == 1) {
+//			arma::mat V_layer(2 * AreaSize, 2 * AreaSize);
+//			arma::mat V_lap(2 * AreaSize, 2 * AreaSize);
+//			RGB2V(msg, V_layer, LastCrawler.centroid_X, LastCrawler.centroid_Y, 2 * AreaSize);
+//		}
 	 	bool Detected = DetectCrawler(Green_Mask,Blue_Mask,crawler);
 
 		if (Detected) {
 			LastCrawler = crawler;
-			markCrawler(msg, crawler);
+//			markCrawler(msg, crawler);
 			CrawlerPublish(msg, crawler);
 		}
 
