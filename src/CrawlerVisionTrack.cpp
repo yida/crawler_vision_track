@@ -376,7 +376,7 @@ void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	Mask Green_Mask;
 	Mask Black_Mask;
 
-	int AreaSize = 50; // Interest Area Size
+//	int AreaSize = 50; // Interest Area Size
 	
 	if (!imageType.compare("bgr8"))
 	{
