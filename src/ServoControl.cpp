@@ -8,20 +8,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-char command9[30];
-char command10[30];
-
-void servo_exit(void) {
-	int res = system("/sbin/rmmod /home/root/pwm.ko");
-	if (res != 0)
-		std::cout << "remod Error " << res << std::endl;
-}
+FILE *pwm9, *pwm10;
 
 void servoCallback(const std_msgs::String::ConstPtr& msg) {
 	//std::cout << msg->data << std::endl;
-	int res = system(msg->data.c_str());
+//	char *pch = ;msg->data.substr(0,5).c_str()
+//	const char *tok = ",";
+//	pch = strtok(const_cast<char *>(msg->data.c_str()), tok);
+	std::string p9 = msg->data.substr(0,5);
+	int res = fprintf(pwm9, "%s", p9.c_str());
 	if (res != 0) {
-		std::cout << "Error " << res << std::endl;
+		std::cout << "PWM9 Error " << res << std::endl;
+	}
+
+//	pch = strtok(NULL,",");
+//	pch = msg->data.sub
+	std::string p10 = msg->data.substr(6,5);
+	res = fprintf(pwm10, "%s", p10.c_str());
+	if (res != 0) {
+		std::cout << "PWM10 Error " << res << std::endl;
 	}
 }
 
@@ -35,33 +40,18 @@ void servoCallback(const std_msgs::String::ConstPtr& msg) {
 
 int main(int argc, char ** argv)
 {
-	atexit(servo_exit);
-
 	ros::init(argc, argv, "servo_pwm_control");
 	ros::NodeHandle nh_;
 	ros::Subscriber servo_sub = nh_.subscribe("pan_tilt", 100, servoCallback);
 
-	std::string module_dir = "/home/root/pwm.ko";
-//	nh_.getParam("moduledir", module_dir);
-//	std::cout << module_dir << std::endl;
-	ROS_INFO("Load Module %s", module_dir.c_str());
-	int servo_max = 0, servo_min = 0;
-	nh_.getParam("servo_max", servo_max);
-	nh_.getParam("servo_min", servo_min);
-	ROS_INFO("Servo Max: %d", servo_max);
-	ROS_INFO("Servo Min: %d", servo_min);
-
-	char command[100];
-	sprintf(command, 
-					"/sbin/insmod %s timers=9,10 servo=1 servo_min=%d servo_max=%d",
-					module_dir.c_str(), servo_min, servo_max);
-
-	setuid(0);
-	int res = system(command);
-	if (res != 0) 
-		std::cout << "insmod Error " << res << std::endl;
-
+	pwm9 = fopen ("/dev/pwm9","w");
+	pwm10 = fopen("/dev/pwm10","w");
+	
 	ros::spin();
+	
+
+	fclose(pwm9);
+	fclose(pwm10);
 
 	return 0;
 
