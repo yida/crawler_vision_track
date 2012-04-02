@@ -16,17 +16,21 @@ static const char WINDOW[] = "Image window";
 
 class ImageDisplay {
 	  image_transport::ImageTransport it_;
-//	  image_transport::Subscriber image_sub;
+	  image_transport::Subscriber image_sub;
 	  image_transport::Publisher image_pub;
-
-		message_filters::Subscriber<sensor_msgs::Image> image_sub;
-		message_filters::Subscriber<crawler_vision_track::CrawlerMsgs> crawler_sub;
-		message_filters::TimeSynchronizer<sensor_msgs::Image, crawler_vision_track::CrawlerMsgs> sync;
+		ros::Subscriber crawler_sub;
+//		message_filters::Subscriber<sensor_msgs::Image> image_sub;
+//		message_filters::Subscriber<crawler_vision_track::CrawlerMsgs> crawler_sub;
+//		message_filters::TimeSynchronizer<sensor_msgs::Image, crawler_vision_track::CrawlerMsgs> sync;
 
 public:
 	 ImageDisplay(ros::NodeHandle& Node);
 	 ~ImageDisplay();
 
-	void Callback(const sensor_msgs::ImageConstPtr& img, 
-								const crawler_vision_track::CrawlerMsgs::ConstPtr& crawler);
+//	void Callback(const sensor_msgs::ImageConstPtr& img, 
+//								const crawler_vision_track::CrawlerMsgs::ConstPtr& crawler);
+	void ImageCallback(const sensor_msgs::ImageConstPtr& img);
+	void CrawlerCallback(const crawler_vision_track::CrawlerMsgs::ConstPtr& crawler);
+	double alpha;
+	int beta;
 };

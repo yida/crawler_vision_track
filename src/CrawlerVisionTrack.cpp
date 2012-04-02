@@ -371,7 +371,7 @@ bool VisionTracker::debugImagePublish(image_transport::Publisher& Pub, arma::mat
 void VisionTracker::ImageProc(const sensor_msgs::ImageConstPtr& msg){
 	std::string imageType = msg->encoding;
 //	curFrame = *msg;
-	Crawler crawler = {0,0,0,0,0,0,0};
+	Crawler crawler = {0,0,0,0,0,0,0,0};
 	Mask Blue_Mask;
 	Mask Green_Mask;
 	Mask Black_Mask;

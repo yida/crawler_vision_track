@@ -12,3 +12,7 @@ BlackMaskThreshold:
   Red: 80
   Green: 80
   Blue: 80
+
+constrast: 2
+
+brightness: 150

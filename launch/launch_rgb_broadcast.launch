@@ -12,9 +12,11 @@
 			<remap from="image_mono" to="camera/image_mono_local" />
 			<remap from="image_raw" to="camera/image_raw_slow" />
   </node>
+	<!--
 	<node pkg="crawler_vision_track" type="image_display" name="image_display" output="screen">
+				<rosparam file="$(find crawler_vision_track)/config/vision_track_parameters.yaml"/>
 	</node>
-
+-->
 </launch>
 
 

@@ -21,6 +21,7 @@
 //using boost::asio::ip::udp;
 
 struct Crawler {
+	double time;
 	double likelihood;
 	int centroid_X;
 	int centroid_Y;
